@@ -2,6 +2,7 @@
 #define __GAME_SCENE_H__
 
 #include "cocos2d.h"
+#include "Column.h"
 
 class GameScene : public cocos2d::Layer
 {
@@ -17,8 +18,19 @@ public:
     
     // implement the "static create()" method manually
     CREATE_FUNC(GameScene);
+	void update(float) override;
 
+private:
+	void SetPhysicsWorld(cocos2d::PhysicsWorld *world) {
+		sceneWorld = world;
+	};
 
+	void SpawnCol(float dt);
+	void ScheduleSpawnBg(float dt);
+	void SpawnBg(float dt);
+	cocos2d::PhysicsWorld *sceneWorld;
+	Column column;
+	cocos2d::CCSprite *backgroundSprite;
 };
 
 #endif // __GAME_SCENE_H__
