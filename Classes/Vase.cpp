@@ -7,8 +7,7 @@ Vase::Vase() {
 	visibleSize = Director::getInstance()->getVisibleSize();
 	origin = Director::getInstance()->getVisibleOrigin();
 }
-
-void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, float colY, float colScale) {
+void Vase::SpawnVase(cocos2d::Layer *layer, cocos2d::EventListenerTouchOneByOne *touchListener, float colHeight, float colWidth, float colY, float colScale) {
 	int vaseId = rand()%3+1;
 
 	char buff[11];
@@ -16,8 +15,13 @@ void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, flo
 	std::string buffAsStdStr = buff;
 
 	auto vase = Sprite::create(buffAsStdStr);
-	auto vaseBody = PhysicsBody::createBox(vase->getContentSize());
+	auto vaseBody = PhysicsBody::createBox(vase->getContentSize(), *new PhysicsMaterial(10, 10, 10));
 	vaseBody->setDynamic(true);
+	vaseBody->setGravityEnable(false);
+	vaseBody->setCollisionBitmask(VASE_COLLISION_BITMASK);
+	vaseBody->setContactTestBitmask(true);
+	vase->setName("VaseElement");
+	
 	vase->setPhysicsBody(vaseBody);
 
 	float vaseScale = visibleSize.height / 3 / vase->getContentSize().height / 2;
@@ -27,13 +31,8 @@ void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, flo
 	CCLOG("SPAWN VASE %f", vase->getContentSize().width);
 
 	auto columnAction = MoveBy::create(COL_MOVEMENT_SPEED * visibleSize.width, Point(-visibleSize.width*1.5, 0));
-	vase->runAction(columnAction);
-	layer->scheduleUpdate(); //??? Should it work?
-}
+	vase->runAction(Sequence::create(columnAction, RemoveSelf::create(true), nullptr));	
 
-void Vase::update(float dt) {
-	CCLOG("VASE POSITION FALL: %f", this->getPosition().y);
-	if (this->getPosition().y <= 200) {
-		this->removeFromPhysicsWorld();
-	}
+
+	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, vase);
 }

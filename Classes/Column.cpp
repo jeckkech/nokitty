@@ -8,7 +8,7 @@ Column::Column(){
 	origin = Director::getInstance()->getVisibleOrigin();
 }
 
-void Column::SpawnColumn(cocos2d::Layer *layer) {
+void Column::SpawnColumn(cocos2d::Layer *layer, cocos2d::EventListenerTouchOneByOne *touchListener) {
 	auto column = Sprite::create("col_1.png");
 
 	auto colBody = PhysicsBody::createBox(column->getContentSize());
@@ -19,9 +19,8 @@ void Column::SpawnColumn(cocos2d::Layer *layer) {
 	column->setPosition(Point(visibleSize.width + column->getContentSize().width*colScale + origin.x, visibleSize.height/3));
 	column->setScale(colScale);
 	layer->addChild(column, 1);
-	CCLOG("SPAWN COLUMN");
 
-	vase.SpawnVase(layer, column->getContentSize().height * colScale, column->getContentSize().width * colScale, column->getPositionY(), colScale);
+	vase.SpawnVase(layer, touchListener, column->getContentSize().height * colScale, column->getContentSize().width * colScale, column->getPositionY(), colScale);
 	auto columnAction = MoveBy::create(COL_MOVEMENT_SPEED * visibleSize.width, Point(-visibleSize.width*1.5, 0));
 	column->runAction(columnAction);
 }

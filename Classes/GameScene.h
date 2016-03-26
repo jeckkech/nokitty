@@ -3,6 +3,7 @@
 
 #include "cocos2d.h"
 #include "Column.h"
+#include "Kitty.h"
 
 class GameScene : public cocos2d::Layer
 {
@@ -19,6 +20,7 @@ public:
     // implement the "static create()" method manually
     CREATE_FUNC(GameScene);
 	void update(float) override;
+	cocos2d::EventListenerTouchOneByOne *touchListener;
 
 private:
 	void SetPhysicsWorld(cocos2d::PhysicsWorld *world) {
@@ -26,11 +28,15 @@ private:
 	};
 
 	void SpawnCol(float dt);
+	void KittyJump(float dt);
 	void ScheduleSpawnBg(float dt);
 	void SpawnBg(float dt);
+	bool onContactBegin(cocos2d::PhysicsContact &contact);
+	bool onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event);
 	cocos2d::PhysicsWorld *sceneWorld;
 	Column column;
-	cocos2d::CCSprite *backgroundSprite;
+	Kitty *kitty;
+	cocos2d::Sprite *backgroundSprite;
 };
 
 #endif // __GAME_SCENE_H__

@@ -3,12 +3,11 @@
 
 #include "cocos2d.h"
 
-class Vase : public cocos2d::Layer
+class Vase
 {
 public:
 	Vase();
-	void SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, float colY, float colScale);
-	void update(float) override;
+	void SpawnVase(cocos2d::Layer *layer, cocos2d::EventListenerTouchOneByOne *touchListener, float colHeight, float colWidth, float colY, float colScale);
 
 private:
 	cocos2d::Size visibleSize;
