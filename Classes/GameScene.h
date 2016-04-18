@@ -45,6 +45,7 @@ private:
 
 	cocos2d::PhysicsWorld *sceneWorld;
 	std::deque<cocos2d::Sprite*> columnList;
+	std::deque<cocos2d::Sprite*> vaseList;
 	int columnsOnScreen;
 	Column column;
 	Kitty *kitty;

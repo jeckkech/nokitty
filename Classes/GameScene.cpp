@@ -86,14 +86,15 @@ bool GameScene::init()
 
 	auto contactListener = EventListenerPhysicsContact::create();
 	contactListener->onContactBegin = CC_CALLBACK_1(GameScene::onContactBegin, this);
-	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(contactListener, this);
+	this->getEventDispatcher()->addEventListenerWithSceneGraphPriority(contactListener, this);
 	
 	touchListener = EventListenerTouchOneByOne::create();
-	touchListener->setSwallowTouches(true);
+	
+	touchListener->setSwallowTouches(false);
 	touchListener->onTouchBegan = CC_CALLBACK_2(GameScene::onTouchBegan, this);
 	touchListener->onTouchMoved = CC_CALLBACK_2(GameScene::onTouchMove, this);
 	touchListener->onTouchEnded = CC_CALLBACK_2(GameScene::onTouchStop, this);
-	touchListener->onTouchCancelled = CC_CALLBACK_2(GameScene::onTouchCancel, this);
+	//touchListener->onTouchCancelled = CC_CALLBACK_2(GameScene::onTouchCancel, this);
 	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, this);
 
     return true;
@@ -109,7 +110,7 @@ bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 		a->getNode()->stopAllActions();
 		a->applyImpulse(Vect(rand() % 100, rand() % 100));
 		CCLOG("IMPULSE APPLIED");
-		Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, a->getNode());
+		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), a->getNode());
 	}
 	else if (VASE_COLLISION_BITMASK == b->getCollisionBitmask() && KITTY_COLLISION_BITMASK == a->getCollisionBitmask()) {
 		b->setGravityEnable(true);
@@ -117,31 +118,31 @@ bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 		b->getNode()->stopAllActions();
 		b->applyImpulse(Vect(rand() % 200 + (-100), rand() % 300 + (-150)));
 		CCLOG("IMPULSE APPLIED2");
-		Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, b->getNode());
+		b->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), b->getNode());
 	}
 	else if (VASE_COLLISION_BITMASK == a->getCollisionBitmask() && VASE_COLLISION_BITMASK == b->getCollisionBitmask()) {
 		a->setGravityEnable(true);
 		b->setGravityEnable(true);
 		a->getNode()->stopAllActions();
 		b->getNode()->stopAllActions();
-		Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, a->getNode());
-		Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, b->getNode());
+		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone()->clone(), a->getNode());
+		b->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), b->getNode());
 	}
 	else if (VASE_COLLISION_BITMASK == a->getCollisionBitmask()) {
-		Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, a->getNode());
+		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), a->getNode());
 	}
 	else if (VASE_COLLISION_BITMASK == b->getCollisionBitmask()) {
-		Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, b->getNode());
+		b->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), b->getNode());
 	}
-	if (movingNode) { //TODO comment this block if performance drop
+/*	if (movingNode) { //TODO comment this block if performance drop
 		
 		//movingNode->getPhysicsBody()->setGravityEnable(true);
 		//movingNode->getPhysicsBody()->setDynamic(true);
 		movingNode->getPhysicsBody()->setEnable(true);
 		Director::getInstance()->getEventDispatcher()->removeEventListenersForTarget(movingNode);
-		Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, movingNode);
+		Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), movingNode);
 		movingNode = nullptr;
-	}
+	}*/
 }
 
 bool GameScene::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event) {
@@ -152,12 +153,13 @@ bool GameScene::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event) {
 	if (node) {
 		std::string nodeName = node->getName().c_str();
 		if (node->getBoundingBox().containsPoint(touch->getLocation()) && nodeName.find("VaseElement") != std::string::npos) {
+			movingNode = node;
 			node->getPhysicsBody()->resetForces();
 			CCLOG("VASE TOUCHED");
 			node->stopAllActions();
-			//node->setPosition(touch->getLocation());
-			node->setPositionX(touch->getLocation().x + node->getContentSize().width / 2);
-			node->setPositionY(touch->getLocation().y + node->getContentSize().height / 2);
+			node->setPosition(touch->getLocation() + touch->getDelta());
+			/*node->setPositionX(touch->getLocation().x + node->getContentSize().width / 2);
+			node->setPositionY(touch->getLocation().y + node->getContentSize().height / 2);*/
 		}
 	}
 }
@@ -168,15 +170,16 @@ bool GameScene::onTouchMove(cocos2d::Touch *touch, cocos2d::Event *event) {
 
 	if (body) {
 		std::string nodeName = node->getName().c_str();
-		if (node->getBoundingBox().containsPoint(touch->getLocation()) && nodeName.find("VaseElement") != std::string::npos) {
+		if (node->getBoundingBox().containsPoint(touch->getLocation()) && nodeName.find("VaseElement") != std::string::npos && movingNode == node) {
 			CCLOG("VASE MOVED");
 			//body->setGravityEnable(false);
 			//body->setDynamic(false);
-			body->setEnable(false); //TODO set to true if performance drop
+			//body->setEnable(false); //TODO set to true if performance drop
 			
-			node->setPositionX(touch->getLocation().x + node->getContentSize().width / 2);
-			node->setPositionY(touch->getLocation().y + node->getContentSize().height / 2);
-			movingNode = node;
+			node->setPosition(touch->getLocation() + touch->getDelta());
+			/*node->setPositionX(touch->getLocation().x + node->getContentSize().width / 2);
+			node->setPositionY(touch->getLocation().y + node->getContentSize().height / 2);*/
+			//movingNode = node;
 		}
 	}
 }
@@ -195,6 +198,7 @@ bool hasEnding(std::string const &fullString, std::string const &ending) {
 }
 
 bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
+	
 		auto node = event->getCurrentTarget();
 		auto body = node->getPhysicsBody();
 		if (node) {
@@ -202,18 +206,19 @@ bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
 			if (node->getBoundingBox().containsPoint(touch->getLocation()) && nodeName.find("VaseElement") != std::string::npos) {
 				movingNode = nullptr;
 				CCLOG("VASE RELEASED");
-				node->stopAllActions();
+				
 			//	body->setGravityEnable(true);
 			//	body->setDynamic(true);
-				body->setEnable(true);
+			//	body->setEnable(true);
 
 				//node->getEventDispatcher()->removeAllEventListeners();
-				Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, node);
+				//Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), node);
 				Vec2 origin = Director::getInstance()->getVisibleOrigin();
 				CCLOG("COLUMNS NUMBER0: %i", columnList.size());
 				for (int i = 0; i < columnList.size(); i++) {
 					if (columnList.at(i)->getBoundingBox().containsPoint(touch->getLocation())) {
-						Director::getInstance()->getEventDispatcher()->removeEventListenersForTarget(movingNode);
+
+						Director::getInstance()->getEventDispatcher()->removeEventListenersForTarget(node);
 						float colScale = visibleSizeHeight / 3 / columnList.at(i)->getContentSize().height;
 						float vaseScale = visibleSizeHeight / 3 / node->getContentSize().height / 2;
 
@@ -272,6 +277,14 @@ void GameScene::update(float dt) {
 			break;
 		}
 	}
+
+	for (int i = 0; i < vaseList.size(); i++) {
+		if (vaseList.at(i)->getPositionY() <= 0) {
+			CCLOG("GAME OVER!");
+			auto newGame = GameScene::createScene();
+			Director::getInstance()->replaceScene(newGame);
+		}
+	}
 	kitty->Animate();
 }
 
@@ -283,7 +296,7 @@ void GameScene::ScheduleSpawnBg(float dt) {
 }
 
 void GameScene::SpawnCol(float dt) {
-	column.SpawnColumn(this, &columnList, &columnsOnScreen);
+	column.SpawnColumn(this, &columnList, &vaseList, &columnsOnScreen);
 }
 
 void GameScene::KittyJump(float dt) {

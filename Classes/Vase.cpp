@@ -7,7 +7,7 @@ Vase::Vase() {
 	visibleSize = Director::getInstance()->getVisibleSize();
 	origin = Director::getInstance()->getVisibleOrigin();
 }
-void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, float colY, float colScale) {
+void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, float colY, float colScale, std::deque<cocos2d::Sprite*> *vaseList) {
 	int vaseId = rand()%3+1;
 
 	char buff[20];
@@ -54,6 +54,8 @@ void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, flo
 	}
 
 	layer->addChild(vase, 100);
+	vaseList->push_front(vase);
+	CCLOG("VASES SPAWNED: %i", vaseList->size());
 	CCLOG("SPAWN VASE %f", vase->getContentSize().width);
 
 
