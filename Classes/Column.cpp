@@ -8,7 +8,7 @@ Column::Column(){
 	origin = Director::getInstance()->getVisibleOrigin();
 }
 
-void Column::SpawnColumn(cocos2d::Layer *layer, cocos2d::EventListenerTouchOneByOne *touchListener) {
+void Column::SpawnColumn(cocos2d::Layer *layer, std::deque<cocos2d::Sprite*> *columnList, int *columnsOnScreen) {
 	auto column = Sprite::create("col_1.png");
 
 	auto colBody = PhysicsBody::createBox(column->getContentSize());
@@ -19,8 +19,15 @@ void Column::SpawnColumn(cocos2d::Layer *layer, cocos2d::EventListenerTouchOneBy
 	column->setPosition(Point(visibleSize.width + column->getContentSize().width*colScale + origin.x, visibleSize.height/3));
 	column->setScale(colScale);
 	layer->addChild(column, 1);
-
-	vase.SpawnVase(layer, touchListener, column->getContentSize().height * colScale, column->getContentSize().width * colScale, column->getPositionY(), colScale);
+	columnList->push_back(column);
+	*columnsOnScreen = columnList->size();
+	CCLOG("SIZE OF QUEUE: %i", columnList->size());
+	vase.SpawnVase(layer, column->getContentSize().height * colScale, column->getContentSize().width * colScale, column->getPositionY(), colScale);
 	auto columnAction = MoveBy::create(COL_MOVEMENT_SPEED * visibleSize.width, Point(-visibleSize.width*1.5, 0));
 	column->runAction(columnAction);
+	
+	if (columnList->size() > 10) {
+		columnList->pop_front();
+	}
+	column->setName("Column");
 }

@@ -27,13 +27,25 @@ private:
 		sceneWorld = world;
 	};
 
+	cocos2d::PhysicsBody *currentVaseBody;
+	float visibleSizeWidth;
+	float visibleSizeHeight;
+	int *totalScore;
+	cocos2d::Label *scoreLabel;
 	void SpawnCol(float dt);
 	void KittyJump(float dt);
 	void ScheduleSpawnBg(float dt);
 	void SpawnBg(float dt);
 	bool onContactBegin(cocos2d::PhysicsContact &contact);
 	bool onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event);
+	bool onTouchMove(cocos2d::Touch *touch, cocos2d::Event *event);
+	bool onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event);
+	bool onTouchCancel(cocos2d::Touch *touch, cocos2d::Event *event);
+	cocos2d::Node *movingNode;
+
 	cocos2d::PhysicsWorld *sceneWorld;
+	std::deque<cocos2d::Sprite*> columnList;
+	int columnsOnScreen;
 	Column column;
 	Kitty *kitty;
 	cocos2d::Sprite *backgroundSprite;

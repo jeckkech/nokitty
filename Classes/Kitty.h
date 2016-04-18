@@ -8,12 +8,17 @@ class Kitty
 public:
 	Kitty(cocos2d::Layer *layer);
 	void Jump();
+	void Land();
+	void Animate();
+	bool isLanding;
 	bool isInJump;
+	cocos2d::Vec2 GetPosition();
 private:
 	cocos2d::Size visibleSize;
 	cocos2d::Vec2 origin;
 	cocos2d::SpriteBatchNode* spritebatch;
 	float initialYPosition;
+	cocos2d::Animation* animation;
 };
 
 #endif // __KITTY_H__

@@ -26,13 +26,13 @@ Kitty::Kitty(cocos2d::Layer *layer) {
 	}
 
 	float kittyScale = (visibleSize.height / 3) / catSprite->getContentSize().height;
+	catSprite->setName("KittySpriteNode");
 	spritebatch->addChild(catSprite);
 	layer->addChild(spritebatch, 2);
 	spritebatch->setPosition(visibleSize.width / 2 + origin.x, visibleSize.height / 3 - origin.y);
 	spritebatch->setScale(kittyScale);
-	initialYPosition = spritebatch->getPosition().y;
-	Animation* animation = Animation::createWithSpriteFrames(animFrames, 0.2f);
-	//animation->setDelayPerUnit(0.3f);
+	initialYPosition = visibleSize.height / 3 - origin.y;
+	animation = Animation::createWithSpriteFrames(animFrames, 0.2f);
 	auto kittyBody = PhysicsBody::createCircle(catSprite->getContentSize().width*kittyScale / 2);
 	kittyBody->setCollisionBitmask(KITTY_COLLISION_BITMASK);
 	kittyBody->setContactTestBitmask(true);
@@ -46,29 +46,33 @@ Kitty::Kitty(cocos2d::Layer *layer) {
 	catSprite->runAction(RepeatForever::create(Animate::create(animation)));
 	
 	isInJump = false;
+	isLanding = false;
 }
 
+cocos2d::Vec2 Kitty::GetPosition() {
+	return spritebatch->getPosition();
+}
+
+void Kitty::Animate() {
+	if (spritebatch->numberOfRunningActions() < 1) {
+		spritebatch->getChildByName("KittySpriteNode")->resume();
+	}
+}
 void Kitty::Jump() {
-	if (true == isInJump) {
-		if (spritebatch->getPositionY() >= initialYPosition + visibleSize.height / 3) {
-			isInJump = false;
-		}
-		else {
-			spritebatch->setPositionY(spritebatch->getPosition().y + (KITTY_JUMP_SPEED * visibleSize.height));
-			isInJump = true;
-		}
+	if(spritebatch->numberOfRunningActions() < 1){
+		spritebatch->getChildByName("KittySpriteNode")->pause();
+		auto kittyJumpAction = MoveTo::create((KITTY_JUMP_SPEED * visibleSize.height), Point(spritebatch->getPositionX(), initialYPosition + visibleSize.height / 3));
+		auto kittyLandAction = MoveTo::create((KITTY_JUMP_SPEED * visibleSize.height), Point(spritebatch->getPositionX(), initialYPosition));
+		
+		spritebatch->runAction(Sequence::create(kittyJumpAction, kittyLandAction, nullptr));
 	}
-	else {
-		if (spritebatch->getPositionY() <= initialYPosition) {
-			isInJump = true;
-		}
-		else {
-			spritebatch->setPositionY(spritebatch->getPosition().y - (KITTY_FALL_SPEED * visibleSize.height));
-			isInJump = false;
-		}
+}
+
+void Kitty::Land() {
+	if (spritebatch->getPositionY() >= initialYPosition + visibleSize.height / 3) {
+		spritebatch->setPositionY(spritebatch->getPosition().y - (KITTY_FALL_SPEED * visibleSize.height));
+		isLanding = true;
+	} else {
+		isLanding = false;
 	}
-
-
-	//spritebatch->setPosition(spritebatch->getPosition().x, spritebatch->getPosition().y+5);
-	//spritebatch->
 }

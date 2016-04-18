@@ -8,7 +8,7 @@ class Column
 {
 public:
 	Column();
-	void SpawnColumn(cocos2d::Layer *layer, cocos2d::EventListenerTouchOneByOne *touchListener);
+	void SpawnColumn(cocos2d::Layer *layer, std::deque<cocos2d::Sprite*> *columnList, int *columnsOnScreen);
 
 private:
 	cocos2d::Size visibleSize;
