@@ -46,23 +46,34 @@ bool GameScene::init()
 	visibleSizeHeight = visibleSize.height;
 	Size frameSize = Director::getInstance()->getOpenGLView()->getFrameSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
-
 	
-	auto backgroundSprite = CCSprite::create("bg_part_big.png");
+	backgroundSprite1 = CCSprite::create("bg_part_big.png");
+	backgroundSprite2 = CCSprite::create("bg_part_big.png");
+	backgroundSprite3 = CCSprite::create("bg_part_big.png");
+	float bgPartScale = visibleSize.height / backgroundSprite1->getContentSize().height;
+	backgroundSprite1->setAnchorPoint(Point(0, 0));
+	backgroundSprite2->setAnchorPoint(Point(0, 0));
+	backgroundSprite3->setAnchorPoint(Point(0, 0));
 
-	float bgPartScale = visibleSize.height / backgroundSprite->getContentSize().height;
-	int bgPartCounter = ceilf(visibleSize.width / (backgroundSprite->getContentSize().width*bgPartScale)) + 1;
-	for (int i = 0; i < bgPartCounter; i++) {
-		auto backgroundSprite = CCSprite::create("bg_part_big.png");
-		backgroundSprite->setPosition(Point(backgroundSprite->getContentSize().width * bgPartScale * i, visibleSize.height / 2 + origin.y));
-		backgroundSprite->setScale(bgPartScale);
-		this->addChild(backgroundSprite, 0);
-		//auto backgroundAction = MoveBy::create(COL_MOVEMENT_SPEED*visibleSize.width*bgPartCounter, Point(-visibleSize.width*bgPartCounter*1.5, 0));
-		//backgroundSprite->runAction(backgroundAction);
-	}
+	backgroundSprite1->setScale(bgPartScale);
+	backgroundSprite2->setScale(bgPartScale);
+	backgroundSprite3->setScale(bgPartScale);
 
-	//this->scheduleOnce(schedule_selector(GameScene::SpawnBg), COL_MOVEMENT_SPEED*(backgroundSprite->getContentSize().width*bgPartScale*bgPartCounter-visibleSize.width*2));
-	//this->scheduleOnce(schedule_selector(GameScene::ScheduleSpawnBg), COL_MOVEMENT_SPEED*(backgroundSprite->getContentSize().width*bgPartScale*bgPartCounter -visibleSize.width*2));
+	backgroundSprite1->setPositionX(0);
+	backgroundSprite2->setPositionX(backgroundSprite1->getContentSize().width*bgPartScale);
+	backgroundSprite3->setPositionX(backgroundSprite1->getContentSize().width*bgPartScale*2);
+
+	this -> addChild(backgroundSprite1, 0);
+	this -> addChild(backgroundSprite2, 0);
+	this -> addChild(backgroundSprite3, 0);
+
+	auto backgroundAction1 = MoveBy::create(COL_MOVEMENT_SPEED*visibleSize.width, Point(-visibleSize.width*1.5, 0));
+	auto backgroundAction2 = MoveBy::create(COL_MOVEMENT_SPEED*visibleSize.width, Point(-visibleSize.width*1.5, 0));
+	auto backgroundAction3 = MoveBy::create(COL_MOVEMENT_SPEED*visibleSize.width, Point(-visibleSize.width*1.5, 0));
+
+	backgroundSprite1->runAction(RepeatForever::create(backgroundAction1));
+	backgroundSprite2->runAction(RepeatForever::create(backgroundAction2));
+	backgroundSprite3->runAction(RepeatForever::create(backgroundAction3));
 
 	auto edgeBody = PhysicsBody::createEdgeBox(visibleSize, PHYSICSBODY_MATERIAL_DEFAULT, 3);
 	auto edgeNode = Node::create();
@@ -270,6 +281,17 @@ bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
 
 
 void GameScene::update(float dt) {
+	float bgSize = backgroundSprite1->getContentSize().width*backgroundSprite1->getScale();
+	if (backgroundSprite1->getPositionX() <= -bgSize) {
+		backgroundSprite1->setPositionX(backgroundSprite3->getPositionX() + bgSize);
+	}
+	else if (backgroundSprite2->getPositionX() <= -bgSize) {
+		backgroundSprite2->setPositionX(backgroundSprite1->getPositionX() + bgSize);
+	}
+	else if (backgroundSprite3->getPositionX() <= -bgSize) {
+		backgroundSprite3->setPositionX(backgroundSprite2->getPositionX() + bgSize);
+	}
+
 	for (int i = 0; i < columnList.size(); i++) {
 		float diff = columnList.at(i)->getPositionX() - this->kitty->GetPosition().x;
 		if (diff > 0 && diff <= columnList.at(i)->getContentSize().width * 2) {
