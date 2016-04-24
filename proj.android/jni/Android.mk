@@ -18,7 +18,8 @@ LOCAL_SRC_FILES := hellocpp/main.cpp \
                    ../../Classes/SplashScene.cpp \
                    ../../Classes/Column.cpp \
 				   ../../Classes/Vase.cpp \
-				   ../../Classes/Kitty.cpp
+				   ../../Classes/Kitty.cpp \
+					../../Classes/Popup.cpp
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../Classes
 
