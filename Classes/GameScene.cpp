@@ -1,6 +1,7 @@
 #include "GameScene.h"
 #include "Definitions.h"
 #include "Kitty.h"
+#include "Popup.h"
 #include <string>
 
 USING_NS_CC;
@@ -59,9 +60,9 @@ bool GameScene::init()
 	backgroundSprite2->setScale(bgPartScale);
 	backgroundSprite3->setScale(bgPartScale);
 
-	backgroundSprite1->setPositionX(0);
-	backgroundSprite2->setPositionX(backgroundSprite1->getContentSize().width*bgPartScale);
-	backgroundSprite3->setPositionX(backgroundSprite1->getContentSize().width*bgPartScale*2);
+	backgroundSprite1->setPosition(origin.x, origin.y);
+	backgroundSprite2->setPosition(backgroundSprite1->getContentSize().width*bgPartScale + origin.x, origin.y);
+	backgroundSprite3->setPosition(backgroundSprite1->getContentSize().width*bgPartScale*2 + origin.x, origin.y);
 
 	this -> addChild(backgroundSprite1, 0);
 	this -> addChild(backgroundSprite2, 0);
@@ -95,7 +96,7 @@ bool GameScene::init()
 	kitty = new Kitty(this);
 	this->scheduleUpdate();
 
-	auto contactListener = EventListenerPhysicsContact::create();
+	contactListener = EventListenerPhysicsContact::create();
 	contactListener->onContactBegin = CC_CALLBACK_1(GameScene::onContactBegin, this);
 	this->getEventDispatcher()->addEventListenerWithSceneGraphPriority(contactListener, this);
 	
@@ -105,13 +106,11 @@ bool GameScene::init()
 	touchListener->onTouchBegan = CC_CALLBACK_2(GameScene::onTouchBegan, this);
 	touchListener->onTouchMoved = CC_CALLBACK_2(GameScene::onTouchMove, this);
 	touchListener->onTouchEnded = CC_CALLBACK_2(GameScene::onTouchStop, this);
-	//touchListener->onTouchCancelled = CC_CALLBACK_2(GameScene::onTouchCancel, this);
 	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, this);
 
     return true;
 }
 bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
-	CCLOG("HERE COMES THE CONTACT!!!!!!!!!!!!");
 	PhysicsBody *a = contact.getShapeA()->getBody();
 	PhysicsBody *b = contact.getShapeB()->getBody();
 
@@ -138,7 +137,13 @@ bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 		b->getNode()->stopAllActions();
 		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone()->clone(), a->getNode());
 		b->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), b->getNode());
+	} 
+	/*else if (KITTY_COLLISION_BITMASK == a->getCollisionBitmask() && COLUMN_COLLISION_BITMASK == b->getCollisionBitmask()) {
+		b->getNode()->setName("ColumnActive");
 	}
+	else if (KITTY_COLLISION_BITMASK == b->getCollisionBitmask() && COLUMN_COLLISION_BITMASK == a->getCollisionBitmask()) {
+		a->getNode()->setName("ColumnActive");
+	}*/
 	else if (VASE_COLLISION_BITMASK == a->getCollisionBitmask()) {
 		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), a->getNode());
 	}
@@ -161,16 +166,13 @@ bool GameScene::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event) {
 	CCLOG("VASE TAP");
 	CCLOG("%s", node->getName().c_str());
 
-	if (node) {
+	if (node && !gameOverInitiated) {
 		std::string nodeName = node->getName().c_str();
 		if (node->getBoundingBox().containsPoint(touch->getLocation()) && nodeName.find("VaseElement") != std::string::npos) {
 			movingNode = node;
 			node->getPhysicsBody()->resetForces();
-			CCLOG("VASE TOUCHED");
 			node->stopAllActions();
 			node->setPosition(touch->getLocation() + touch->getDelta());
-			/*node->setPositionX(touch->getLocation().x + node->getContentSize().width / 2);
-			node->setPositionY(touch->getLocation().y + node->getContentSize().height / 2);*/
 		}
 	}
 }
@@ -179,18 +181,10 @@ bool GameScene::onTouchMove(cocos2d::Touch *touch, cocos2d::Event *event) {
 	auto node = event->getCurrentTarget();
 	auto body = node->getPhysicsBody();
 
-	if (body) {
+	if (body && !gameOverInitiated) {
 		std::string nodeName = node->getName().c_str();
 		if (node->getBoundingBox().containsPoint(touch->getLocation()) && nodeName.find("VaseElement") != std::string::npos && movingNode == node) {
-			CCLOG("VASE MOVED");
-			//body->setGravityEnable(false);
-			//body->setDynamic(false);
-			//body->setEnable(false); //TODO set to true if performance drop
-			
 			node->setPosition(touch->getLocation() + touch->getDelta());
-			/*node->setPositionX(touch->getLocation().x + node->getContentSize().width / 2);
-			node->setPositionY(touch->getLocation().y + node->getContentSize().height / 2);*/
-			//movingNode = node;
 		}
 	}
 }
@@ -212,35 +206,27 @@ bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
 	
 		auto node = event->getCurrentTarget();
 		auto body = node->getPhysicsBody();
-		if (node) {
+		if (node && !gameOverInitiated) {
 			std::string nodeName = node->getName().c_str();
 			if (node->getBoundingBox().containsPoint(touch->getLocation()) && nodeName.find("VaseElement") != std::string::npos) {
 				movingNode = nullptr;
-				CCLOG("VASE RELEASED");
-				
-			//	body->setGravityEnable(true);
-			//	body->setDynamic(true);
-			//	body->setEnable(true);
-
-				//node->getEventDispatcher()->removeAllEventListeners();
-				//Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), node);
 				Vec2 origin = Director::getInstance()->getVisibleOrigin();
 				CCLOG("COLUMNS NUMBER0: %i", columnList.size());
 				for (int i = 0; i < columnList.size(); i++) {
+					/*std::string colName = columnList.at(i)->getName().c_str();
+
+					CCLOG("COLUMN NAME %s", columnList.at(i)->getName().c_str());*/
 					if (columnList.at(i)->getBoundingBox().containsPoint(touch->getLocation())) {
 
 						Director::getInstance()->getEventDispatcher()->removeEventListenersForTarget(node);
 						float colScale = visibleSizeHeight / 3 / columnList.at(i)->getContentSize().height;
 						float vaseScale = visibleSizeHeight / 3 / node->getContentSize().height / 2;
 
-						CCLOG("IM INSIDE!");
 						body->setGravityEnable(false);
 						body->resetForces();
 						body->setDynamic(false);
 						body->getNode()->removeFromPhysicsWorld();
 						body->getNode()->setRotation(0);
-
-						
 
 						float colHeight = columnList.at(i)->getContentSize().height;
 
@@ -291,7 +277,7 @@ void GameScene::update(float dt) {
 	else if (backgroundSprite3->getPositionX() <= -bgSize) {
 		backgroundSprite3->setPositionX(backgroundSprite2->getPositionX() + bgSize);
 	}
-
+	if(!gameOverInitiated){
 	for (int i = 0; i < columnList.size(); i++) {
 		float diff = columnList.at(i)->getPositionX() - this->kitty->GetPosition().x;
 		if (diff > 0 && diff <= columnList.at(i)->getContentSize().width * 2) {
@@ -299,22 +285,34 @@ void GameScene::update(float dt) {
 			break;
 		}
 	}
+	}
 
 	for (int i = 0; i < vaseList.size(); i++) {
-		if (vaseList.at(i)->getPositionY() <= 0) {
+		if (vaseList.at(i)->getPositionY() <= 0 && !gameOverInitiated) {
 			CCLOG("GAME OVER!");
-			auto newGame = GameScene::createScene();
-			Director::getInstance()->replaceScene(newGame);
+			gameOverInitiated = true;
+			Director::getInstance()->setNotificationNode(Popup::createScene());
+			auto repeatLabel = CCSprite::create("restart_arr.png");
+			auto repeatMenuItem = MenuItemSprite::create(repeatLabel, repeatLabel, repeatLabel);
+			repeatLabel->setScale(visibleSizeHeight / 5 / repeatLabel->getContentSize().height);
+			repeatMenuItem->setPosition(Point(visibleSizeWidth / 4, visibleSizeHeight*0.6));
+			repeatMenuItem->setCallback(CC_CALLBACK_1(GameScene::RestartGame, this));
+			auto menu = Menu::create(repeatMenuItem, nullptr);
+			menu->setPosition(Point::ZERO);
+			this->addChild(menu, 1001);
 		}
 	}
 	kitty->Animate();
 }
 
-void GameScene::ScheduleSpawnBg(float dt) {
-	Size visibleSize = Director::getInstance()->getVisibleSize();
-	auto backgroundSprite = CCSprite::create("bg_part_big.png");
-	float bgPartScale = visibleSize.height / backgroundSprite->getContentSize().height;
-	this->schedule(schedule_selector(GameScene::SpawnBg), COL_MOVEMENT_SPEED*(backgroundSprite->getContentSize().width*bgPartScale));
+void GameScene::RestartGame(cocos2d::Ref *sender) {
+	gameOverInitiated = false;
+	auto newGame = GameScene::createScene();
+	this->pause();
+	Director::getInstance()->startAnimation();
+	Director::getInstance()->resume();
+	Director::getInstance()->setNotificationNode(Node::create());
+	Director::getInstance()->replaceScene(newGame);
 }
 
 void GameScene::SpawnCol(float dt) {
@@ -324,24 +322,6 @@ void GameScene::SpawnCol(float dt) {
 void GameScene::KittyJump(float dt) {
 	kitty->Jump();
 	kitty->isInJump = true;
-}
-
-void GameScene::SpawnBg(float dt) {
-	Size visibleSize = Director::getInstance()->getVisibleSize();
-	Vec2 origin = Director::getInstance()->getVisibleOrigin();
-
-	Size frameSize = Director::getInstance()->getOpenGLView()->getFrameSize();
-	auto backgroundSprite = CCSprite::create("bg_part_big.png");
-
-	float bgPartScale = visibleSize.height / backgroundSprite->getContentSize().height;
-	int bgPartCounter = ceilf(visibleSize.width / (backgroundSprite->getContentSize().width*bgPartScale)) + 1;
-	backgroundSprite->setPosition(Point(backgroundSprite->getContentSize().width * bgPartScale * bgPartCounter, visibleSize.height / 2 + origin.y));
-	backgroundSprite->setScale(bgPartScale);
-	this->addChild(backgroundSprite, 0);
-	auto backgroundAction = MoveBy::create(COL_MOVEMENT_SPEED*visibleSize.width*bgPartCounter, Point(-visibleSize.width*bgPartCounter*1.5, 0));
-	backgroundSprite->runAction(backgroundAction);
-
-	//this->scheduleOnce(schedule_selector(GameScene::SpawnBg), COL_MOVEMENT_SPEED*(backgroundSprite->getContentSize().width));
 }
 
 void GameScene::menuCloseCallback(Ref* pSender)

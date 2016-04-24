@@ -13,6 +13,8 @@ void Column::SpawnColumn(cocos2d::Layer *layer, std::deque<cocos2d::Sprite*> *co
 
 	auto colBody = PhysicsBody::createBox(column->getContentSize());
 	colBody->setDynamic(false);
+	colBody->setCollisionBitmask(COLUMN_COLLISION_BITMASK);
+	colBody->setContactTestBitmask(true);
 	column->setPhysicsBody(colBody);
 
 	float colScale = visibleSize.height / 3 / column->getContentSize().height;

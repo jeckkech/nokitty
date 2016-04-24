@@ -57,8 +57,10 @@ void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, flo
 	vaseList->push_front(vase);
 	CCLOG("VASES SPAWNED: %i", vaseList->size());
 	CCLOG("SPAWN VASE %f", vase->getContentSize().width);
-
+	if (vaseList->size() > 20) {
+		vaseList->pop_back();
+	}
 
 	auto columnAction = MoveBy::create(COL_MOVEMENT_SPEED * visibleSize.width, Point(-visibleSize.width*1.5, 0));
-	vase->runAction(Sequence::create(columnAction, RemoveSelf::create(true), nullptr));
+	vase->runAction(columnAction);
 }

@@ -21,6 +21,7 @@ public:
     CREATE_FUNC(GameScene);
 	void update(float) override;
 	cocos2d::EventListenerTouchOneByOne *touchListener;
+	cocos2d::EventListenerPhysicsContact *contactListener;
 
 private:
 	void SetPhysicsWorld(cocos2d::PhysicsWorld *world) {
@@ -30,12 +31,14 @@ private:
 	cocos2d::PhysicsBody *currentVaseBody;
 	float visibleSizeWidth;
 	float visibleSizeHeight;
+	bool gameOverInitiated;
 	int *totalScore;
 	cocos2d::Label *scoreLabel;
 	void SpawnCol(float dt);
 	void KittyJump(float dt);
 	void ScheduleSpawnBg(float dt);
 	void SpawnBg(float dt);
+	void RestartGame(cocos2d::Ref *sender);
 	bool onContactBegin(cocos2d::PhysicsContact &contact);
 	bool onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event);
 	bool onTouchMove(cocos2d::Touch *touch, cocos2d::Event *event);

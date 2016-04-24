@@ -50,7 +50,7 @@ bool MainMenuScene::init()
 	menuItemLabel->setLabel(Label::createWithTTF("TAP TO START", "fonts/Gamegirl.ttf", 32));
 	menuItemLabel->setCallback(CC_CALLBACK_1(MainMenuScene::GoToGameScene, this));
 	menuItemLabel->setPosition(Point(visibleSize.width / 2, visibleSize.height*0.6));
-
+	
 	auto menu = Menu::create(menuItemLabel, nullptr);
 	menu->setPosition(Point::ZERO);
 	this->addChild(menu, 1);
