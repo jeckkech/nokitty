@@ -45,18 +45,33 @@ bool MainMenuScene::init()
 	}
 
 	auto label = Label::createWithTTF("TAP TO START", "fonts/Gamegirl.ttf", 32);
-	
+	auto exitLabel = Label::createWithTTF("EXIT", "fonts/Gamegirl.ttf", 32);
+
 	auto menuItemLabel = MenuItemFont::create();
-	menuItemLabel->setLabel(Label::createWithTTF("TAP TO START", "fonts/Gamegirl.ttf", 32));
+	auto exitMenuItemLabel = MenuItemFont::create();
+
+	exitMenuItemLabel->setLabel(Label::createWithTTF("EXIT", "fonts/Gamegirl.ttf", 32));
+	exitMenuItemLabel->setCallback(CC_CALLBACK_1(MainMenuScene::EndGame, this));
+
+	menuItemLabel->setLabel(Label::createWithTTF("START", "fonts/Gamegirl.ttf", 32));
 	menuItemLabel->setCallback(CC_CALLBACK_1(MainMenuScene::GoToGameScene, this));
-	menuItemLabel->setPosition(Point(visibleSize.width / 2, visibleSize.height*0.6));
 	
-	auto menu = Menu::create(menuItemLabel, nullptr);
+	menuItemLabel->setPosition(Point(visibleSize.width / 2, visibleSize.height*0.6));
+	exitMenuItemLabel->setPosition(Point(visibleSize.width / 2, visibleSize.height*0.4));
+	Vector<MenuItem*> menuItems;
+
+	menuItems.pushBack(menuItemLabel);
+	menuItems.pushBack(exitMenuItemLabel);
+	
+	auto menu = Menu::createWithArray(menuItems);
 	menu->setPosition(Point::ZERO);
 	this->addChild(menu, 1);
     return true;
 }
 
+void MainMenuScene::EndGame(cocos2d::Ref *sender){
+	Director::getInstance()->end();
+}
 void MainMenuScene::GoToGameScene(cocos2d::Ref *sender) {
 	auto scene = GameScene::createScene();
 

@@ -32,7 +32,7 @@ private:
 	float visibleSizeWidth;
 	float visibleSizeHeight;
 	bool gameOverInitiated;
-	int *totalScore;
+	int totalScore;
 	cocos2d::Label *scoreLabel;
 	void SpawnCol(float dt);
 	void KittyJump(float dt);

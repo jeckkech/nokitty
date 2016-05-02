@@ -7,7 +7,7 @@ class Vase
 {
 public:
 	Vase();
-	void SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, float colY, float colScale, std::deque<cocos2d::Sprite*> *vaseList);
+	void SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, float colY, float colScale, std::deque<cocos2d::Sprite*> *vaseList, bool gameOverInitiated);
 
 private:
 	cocos2d::Size visibleSize;

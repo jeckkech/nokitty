@@ -93,6 +93,13 @@ bool GameScene::init()
 	scoreLabel->setPosition(visibleSizeWidth / 2 + origin.x, visibleSizeHeight - scoreLabel->getHeight());
 	this->addChild(scoreLabel);
 
+
+	int savedHighScore = UserDefault::getInstance()->getIntegerForKey("high_score", 0);
+	String *tempHighScore = String::createWithFormat("HI %i", savedHighScore);
+	auto highScoreLabel = Label::createWithTTF(tempHighScore->getCString(), "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
+	highScoreLabel->setPosition(Point(highScoreLabel->getContentSize().width, visibleSizeHeight - (highScoreLabel->getHeight())));
+	this->addChild(highScoreLabel);
+
 	kitty = new Kitty(this);
 	this->scheduleUpdate();
 
@@ -118,7 +125,7 @@ bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 		a->setGravityEnable(true);
 		a->setDynamic(true);
 		a->getNode()->stopAllActions();
-		a->applyImpulse(Vect(rand() % 100, rand() % 100));
+		a->applyImpulse(Vect(rand() % 200 + (-100), rand() % 300 + (-150)));
 		CCLOG("IMPULSE APPLIED");
 		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), a->getNode());
 	}
@@ -290,8 +297,36 @@ void GameScene::update(float dt) {
 	for (int i = 0; i < vaseList.size(); i++) {
 		if (vaseList.at(i)->getPositionY() <= 0 && !gameOverInitiated) {
 			CCLOG("GAME OVER!");
+			//Director::getInstance()->getEventDispatcher()->removeAllEventListeners();
+			contactListener->setEnabled(false);
+			touchListener->setEnabled(false);
+		
+			auto scene = Popup::createScene();
+			UserDefault *def = UserDefault::getInstance();
+			int savedHighScore = def->getIntegerForKey("high_score", 0);
+			if (savedHighScore < totalScore) {
+				CCLOG("NEW HIGH SCORE!!!");
+				
+				auto newHighScoreLabel = Label::createWithTTF("NEW HIGH SCORE!", "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
+				newHighScoreLabel->setPosition(Point(visibleSizeWidth / 2, visibleSizeHeight - (newHighScoreLabel->getContentSize().height * 3)));
+				this->addChild(newHighScoreLabel);
+				def->setIntegerForKey("high_score", totalScore);
+			}
+			/*
+			auto label = Label::createWithTTF("GAME OVER2", "fonts/Gamegirl.ttf", 16);
+			label->setPosition(Point(visibleSizeWidth / 2, visibleSizeHeight / 2));
+			this->addChild(label);
+			*/
+			/*scoreLabel->setVisible(false);
+
+			__String *tempScore = __String::createWithFormat("%i", totalScore);
+			auto highScoreLabel = Label::createWithTTF(tempScore->getCString(), "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
+			highScoreLabel->setPosition(Point(visibleSizeWidth / 2, visibleSizeHeight - (highScoreLabel->getContentSize().height * 2)));
+			this->addChild(highScoreLabel, 1001);*/
+
 			gameOverInitiated = true;
-			Director::getInstance()->setNotificationNode(Popup::createScene());
+
+			Director::getInstance()->setNotificationNode(scene);
 			auto repeatLabel = CCSprite::create("restart_arr.png");
 			auto repeatMenuItem = MenuItemSprite::create(repeatLabel, repeatLabel, repeatLabel);
 			repeatLabel->setScale(visibleSizeHeight / 5 / repeatLabel->getContentSize().height);
@@ -316,7 +351,7 @@ void GameScene::RestartGame(cocos2d::Ref *sender) {
 }
 
 void GameScene::SpawnCol(float dt) {
-	column.SpawnColumn(this, &columnList, &vaseList, &columnsOnScreen);
+	column.SpawnColumn(this, &columnList, &vaseList, &columnsOnScreen, gameOverInitiated);
 }
 
 void GameScene::KittyJump(float dt) {

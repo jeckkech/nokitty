@@ -7,7 +7,7 @@ Vase::Vase() {
 	visibleSize = Director::getInstance()->getVisibleSize();
 	origin = Director::getInstance()->getVisibleOrigin();
 }
-void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, float colY, float colScale, std::deque<cocos2d::Sprite*> *vaseList) {
+void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, float colY, float colScale, std::deque<cocos2d::Sprite*> *vaseList, bool gameOverInitiated) {
 	int vaseId = rand()%3+1;
 
 	char buff[20];
@@ -16,7 +16,7 @@ void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, flo
 
 	auto vase = Sprite::create(buffAsStdStr);
 	auto vaseBody = PhysicsBody::createBox(vase->getContentSize(), *new PhysicsMaterial(0, 1, 0));
-	vaseBody->setDynamic(true);
+	vaseBody->setDynamic(!gameOverInitiated);
 	vaseBody->setGravityEnable(false);
 	vaseBody->setCollisionBitmask(VASE_COLLISION_BITMASK);
 	vaseBody->setContactTestBitmask(true);
@@ -38,7 +38,7 @@ void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, flo
 		vase->setScale(vaseScale * 1.5);
 		vase->setPosition(Point(visibleSize.width + colWidth + origin.x, colY - ((colHeight - vase->getContentSize().height*vaseScale*1.5) / 2) + colHeight));
 		
-		vaseBody->setDynamic(true);
+		vaseBody->setDynamic(!gameOverInitiated);
 		vaseBody->setGravityEnable(false);
 		vaseBody->setCollisionBitmask(VASE_COLLISION_BITMASK);
 		vaseBody->setContactTestBitmask(true);
@@ -62,5 +62,5 @@ void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, flo
 	}
 
 	auto columnAction = MoveBy::create(COL_MOVEMENT_SPEED * visibleSize.width, Point(-visibleSize.width*1.5, 0));
-	vase->runAction(columnAction);
+	vase->runAction(Sequence::create(columnAction, [=]() {vase->stopAllActions();}, nullptr));
 }
