@@ -1,6 +1,7 @@
 #include "Popup.h"
 #include "Definitions.h"
 #include "GameScene.h"
+#include "AdmobHelper.h"
 
 USING_NS_CC;
 
@@ -44,6 +45,16 @@ bool Popup::init() {
 	rectangle[3] = Vec2(visibleSize.width + origin.x, 0 + origin.y);
 
 	cocos2d::Color4F color(222, 222, 222, 0.5);
+
+	CCLOG("ADMOB SHOULD START NOW");
+	if (AdmobHelper::isAdShowing) {
+		AdmobHelper::hideAd();
+		CCLOG("HIDE ADMOB");
+	}
+	else {
+		AdmobHelper::showAd();
+		CCLOG("SHOW ADMOB");
+	}
 
 	rectNode->drawPolygon(rectangle, 4, color, 0, color);
 	rectNode->setCascadeColorEnabled(true);

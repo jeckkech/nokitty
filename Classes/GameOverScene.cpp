@@ -1,4 +1,5 @@
 #include "GameOverScene.h"
+#include "AdmobHelper.h"
 
 USING_NS_CC;
 
@@ -29,6 +30,15 @@ bool GameOverScene::init()
 
 	Size visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
+	CCLOG("ADMOB SHOULD START NOW");
+	if (AdmobHelper::isAdShowing){
+		AdmobHelper::hideAd();
+		CCLOG("HIDE ADMOB");
+	} else {
+		AdmobHelper::showAd();
+		CCLOG("SHOW ADMOB");
+	}
+
 	return true;
 }
 
