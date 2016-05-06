@@ -2,6 +2,7 @@
 #include "Definitions.h"
 #include "Kitty.h"
 #include "Popup.h"
+#include "AdmobHelper.h"
 #include <string>
 
 USING_NS_CC;
@@ -35,12 +36,17 @@ Scene* GameScene::createScene()
 // on "init" you need to initialize your instance
 bool GameScene::init()
 {
+
     //////////////////////////////
     // 1. super init first
     if ( !Layer::init() )
     {
         return false;
     }
+	if (AdmobHelper::isAdShowing) {
+		AdmobHelper::hideBanner();
+		CCLOG("HIDE ADMOB");
+	}
 
 	Size visibleSize = Director::getInstance()->getVisibleSize();
 	visibleSizeWidth = visibleSize.width;
@@ -348,6 +354,9 @@ void GameScene::RestartGame(cocos2d::Ref *sender) {
 	Director::getInstance()->resume();
 	Director::getInstance()->setNotificationNode(Node::create());
 	Director::getInstance()->replaceScene(newGame);
+	if (!AdmobHelper::isAdShowing) {
+		AdmobHelper::showBanner();
+	}
 }
 
 void GameScene::SpawnCol(float dt) {

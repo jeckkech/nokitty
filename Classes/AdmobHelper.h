@@ -4,7 +4,8 @@
 class AdmobHelper
 {
 public:
-	static void hideAd();
+	static void hideBanner();
+	static void showBanner();
 	static void showAd();
 	static bool isAdShowing;
 

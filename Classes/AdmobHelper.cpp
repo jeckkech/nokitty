@@ -18,10 +18,10 @@ bool AdmobHelper::isAdShowing = true;
 
 const char* AppActivityClassName = "org/cocos2dx/cpp/AppActivity";
 
-void AdmobHelper::hideAd()
+void AdmobHelper::hideBanner()
 {
 	cocos2d::JniMethodInfo t;
-	if (cocos2d::JniHelper::getStaticMethodInfo(t, AppActivityClassName, "hideAd", "()V"))
+	if (cocos2d::JniHelper::getStaticMethodInfo(t, AppActivityClassName, "hideBanner", "()V"))
 	{
 
 		t.env->CallStaticVoidMethod(t.classID, t.methodID);
@@ -41,24 +41,34 @@ void AdmobHelper::showAd()
 
 		t.env->CallStaticVoidMethod(t.classID, t.methodID);
 		t.env->DeleteLocalRef(t.classID);
-		isAdShowing = true;
 	}
 
 }
 
+void AdmobHelper::showBanner()
+{
+	cocos2d::JniMethodInfo t;
+	if (cocos2d::JniHelper::getStaticMethodInfo(t, AppActivityClassName, "showBanner", "()V"))
+	{
+
+		t.env->CallStaticVoidMethod(t.classID, t.methodID);
+		t.env->DeleteLocalRef(t.classID);
+		isAdShowing = true;
+	}
+}
 
 #else
 
 
-void AdmobHelper::hideAd()
+void AdmobHelper::hideBanner()
 {
-	CCLOG("hideAd() called");
+	CCLOG("hideBanner() called");
 	isAdShowing = false;
 	return; //nothing
 }
 
 
-void AdmobHelper::showAd()
+void AdmobHelper::showBanner()
 {
 	CCLOG("showAd() called");
 	isAdShowing = true;
