@@ -36,7 +36,6 @@ Scene* GameScene::createScene()
 // on "init" you need to initialize your instance
 bool GameScene::init()
 {
-
     //////////////////////////////
     // 1. super init first
     if ( !Layer::init() )
@@ -269,7 +268,7 @@ bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
 							scoreLabel->setString(tempScore->getCString());
 
 						auto columnAction = MoveBy::create(COL_MOVEMENT_SPEED * visibleSizeWidth, Point(-visibleSizeWidth*1.5, 0));
-						node->runAction(columnAction);
+						node->runAction(Sequence::create(columnAction, [=]() {node->stopAllActions(); node->removeFromParentAndCleanup(true); }, nullptr));
 						break;
 					}
 				}

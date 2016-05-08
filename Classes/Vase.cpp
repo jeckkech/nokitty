@@ -62,5 +62,5 @@ void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, flo
 	}
 
 	auto columnAction = MoveBy::create(COL_MOVEMENT_SPEED * visibleSize.width, Point(-visibleSize.width*1.5, 0));
-	vase->runAction(Sequence::create(columnAction, [=]() {vase->stopAllActions();}, nullptr));
+	vase->runAction(Sequence::create(columnAction, [=]() {vase->stopAllActions(); vase->removeFromParentAndCleanup(true);}, nullptr));
 }

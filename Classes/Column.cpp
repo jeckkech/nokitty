@@ -26,7 +26,7 @@ void Column::SpawnColumn(cocos2d::Layer *layer, std::deque<cocos2d::Sprite*> *co
 	CCLOG("SIZE OF QUEUE: %i", columnList->size());
 	vase.SpawnVase(layer, column->getContentSize().height * colScale, column->getContentSize().width * colScale, column->getPositionY(), colScale, vaseList, gameOverInitiated);
 	auto columnAction = MoveBy::create(COL_MOVEMENT_SPEED * visibleSize.width, Point(-visibleSize.width*1.5, 0));
-	column->runAction(columnAction);
+	column->runAction(Sequence::create(columnAction, [=]() {column->removeFromParentAndCleanup(true); }, nullptr));
 	
 	if (columnList->size() > 10) {
 		columnList->pop_front();
