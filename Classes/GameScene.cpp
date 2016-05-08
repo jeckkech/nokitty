@@ -2,6 +2,7 @@
 #include "Definitions.h"
 #include "Kitty.h"
 #include "Popup.h"
+#include "SimpleAudioEngine.h"
 #include "AdmobHelper.h"
 #include <string>
 
@@ -42,6 +43,13 @@ bool GameScene::init()
     {
         return false;
     }
+
+	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sounds/kitty_jump.wav");
+	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sounds/vase_put.wav");
+	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sounds/vase_fall.wav");
+	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sounds/vase_hit.wav");
+
+
 	if (AdmobHelper::isAdShowing) {
 		AdmobHelper::hideBanner();
 		CCLOG("HIDE ADMOB");
@@ -131,6 +139,7 @@ bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 		a->setDynamic(true);
 		a->getNode()->stopAllActions();
 		a->applyImpulse(Vect(rand() % 200 + (-100), rand() % 300 + (-150)));
+		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_hit.wav");
 		CCLOG("IMPULSE APPLIED");
 		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), a->getNode());
 	}
@@ -139,6 +148,7 @@ bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 		b->setDynamic(true);
 		b->getNode()->stopAllActions();
 		b->applyImpulse(Vect(rand() % 200 + (-100), rand() % 300 + (-150)));
+		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_hit.wav");
 		CCLOG("IMPULSE APPLIED2");
 		b->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), b->getNode());
 	}
@@ -229,7 +239,7 @@ bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
 
 					CCLOG("COLUMN NAME %s", columnList.at(i)->getName().c_str());*/
 					if (columnList.at(i)->getBoundingBox().containsPoint(touch->getLocation())) {
-
+						CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_put.wav");
 						Director::getInstance()->getEventDispatcher()->removeEventListenersForTarget(node);
 						float colScale = visibleSizeHeight / 3 / columnList.at(i)->getContentSize().height;
 						float vaseScale = visibleSizeHeight / 3 / node->getContentSize().height / 2;
@@ -301,6 +311,7 @@ void GameScene::update(float dt) {
 
 	for (int i = 0; i < vaseList.size(); i++) {
 		if (vaseList.at(i)->getPositionY() <= 0 && !gameOverInitiated) {
+			CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_fall.wav");
 			CCLOG("GAME OVER!");
 			//Director::getInstance()->getEventDispatcher()->removeAllEventListeners();
 			contactListener->setEnabled(false);

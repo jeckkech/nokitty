@@ -4,6 +4,7 @@
 #include "cocos2d.h"
 #include "Column.h"
 #include "Kitty.h"
+#include "SimpleAudioEngine.h"
 
 class GameScene : public cocos2d::Layer
 {
@@ -22,6 +23,7 @@ public:
 	void update(float) override;
 	cocos2d::EventListenerTouchOneByOne *touchListener;
 	cocos2d::EventListenerPhysicsContact *contactListener;
+
 
 private:
 	void SetPhysicsWorld(cocos2d::PhysicsWorld *world) {

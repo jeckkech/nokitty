@@ -1,4 +1,5 @@
 #include "Kitty.h"
+#include "SimpleAudioEngine.h"
 #include "Definitions.h"
 
 USING_NS_CC;
@@ -61,6 +62,7 @@ void Kitty::Animate() {
 void Kitty::Jump() {
 	if(spritebatch->numberOfRunningActions() < 1){
 		spritebatch->getChildByName("KittySpriteNode")->pause();
+		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/kitty_jump.wav");
 		auto kittyJumpAction = MoveTo::create((KITTY_JUMP_SPEED * visibleSize.height), Point(spritebatch->getPositionX(), initialYPosition + visibleSize.height / 3));
 		auto kittyLandAction = MoveTo::create((KITTY_JUMP_SPEED * visibleSize.height), Point(spritebatch->getPositionX(), initialYPosition));
 		
