@@ -4,6 +4,7 @@
 #include "Popup.h"
 #include "SimpleAudioEngine.h"
 #include "AdmobHelper.h"
+#include "MainMenuScene.h"
 #include <string>
 
 USING_NS_CC;
@@ -48,7 +49,7 @@ bool GameScene::init()
 	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sounds/vase_put.wav");
 	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sounds/vase_fall.wav");
 	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sounds/vase_hit.wav");
-
+	CocosDenshion::SimpleAudioEngine::getInstance()->setEffectsVolume(0.5);
 
 	if (AdmobHelper::isAdShowing) {
 		AdmobHelper::hideBanner();
@@ -68,7 +69,7 @@ bool GameScene::init()
 	backgroundSprite1->setAnchorPoint(Point(0, 0));
 	backgroundSprite2->setAnchorPoint(Point(0, 0));
 	backgroundSprite3->setAnchorPoint(Point(0, 0));
-
+	
 	backgroundSprite1->setScale(bgPartScale);
 	backgroundSprite2->setScale(bgPartScale);
 	backgroundSprite3->setScale(bgPartScale);
@@ -89,6 +90,20 @@ bool GameScene::init()
 	backgroundSprite2->runAction(RepeatForever::create(backgroundAction2));
 	backgroundSprite3->runAction(RepeatForever::create(backgroundAction3));
 
+	auto menuLabel = CCSprite::create("buttons/menu_btn.png");
+	menuLabel->setAnchorPoint(Point(0, 0));
+	auto menuLabelItem = MenuItemSprite::create(menuLabel, menuLabel, menuLabel);
+	CCLOG("BUTTON SCALE %f", (visibleSize.height * SCORE_FONT_SIZE * 1.3) / menuLabel->getContentSize().height);
+	menuLabel->setScale((visibleSize.height * SCORE_FONT_SIZE * 1.3) / menuLabel->getContentSize().height);
+	//menuLabel->setContentSize(Size(menuLabel->getContentSize().width, (visibleSize.height * SCORE_FONT_SIZE * 1.3)));
+			menuLabelItem->setPosition(Point(visibleSizeWidth - origin.x, visibleSizeHeight + origin.y));
+	menuLabelItem->setCallback(CC_CALLBACK_1(GameScene::MainMenuPrompt, this));
+	auto menu = Menu::create(menuLabelItem, nullptr);
+	menu->setPosition(Point::ZERO);
+	this->addChild(menu, 1001);
+	
+
+
 	auto edgeBody = PhysicsBody::createEdgeBox(visibleSize, PHYSICSBODY_MATERIAL_DEFAULT, 3);
 	auto edgeNode = Node::create();
 	edgeBody->setCollisionBitmask(FLOOR_COLLISION_BITMASK);
@@ -108,7 +123,7 @@ bool GameScene::init()
 
 
 	int savedHighScore = UserDefault::getInstance()->getIntegerForKey("high_score", 0);
-	String *tempHighScore = String::createWithFormat("HI %i", savedHighScore);
+	__String *tempHighScore = String::createWithFormat("HI %i", savedHighScore);
 	auto highScoreLabel = Label::createWithTTF(tempHighScore->getCString(), "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
 	highScoreLabel->setPosition(Point(highScoreLabel->getContentSize().width, visibleSizeHeight - (highScoreLabel->getHeight())));
 	this->addChild(highScoreLabel);
@@ -140,7 +155,7 @@ bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 		a->getNode()->stopAllActions();
 		a->applyImpulse(Vect(rand() % 200 + (-100), rand() % 300 + (-150)));
 		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_hit.wav");
-		CCLOG("IMPULSE APPLIED");
+		CCLOG("IMPULSE APPLIED");		
 		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), a->getNode());
 	}
 	else if (VASE_COLLISION_BITMASK == b->getCollisionBitmask() && KITTY_COLLISION_BITMASK == a->getCollisionBitmask()) {
@@ -288,6 +303,10 @@ bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
 }
 
 
+void GameScene::EndGame(cocos2d::Ref *sender) {
+	Director::getInstance()->end();
+}
+
 void GameScene::update(float dt) {
 	float bgSize = backgroundSprite1->getContentSize().width*backgroundSprite1->getScale();
 	if (backgroundSprite1->getPositionX() <= -bgSize) {
@@ -342,18 +361,90 @@ void GameScene::update(float dt) {
 
 			gameOverInitiated = true;
 
+
 			Director::getInstance()->setNotificationNode(scene);
-			auto repeatLabel = CCSprite::create("restart_arr.png");
+			auto label = Label::createWithTTF("GAME OVER", "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
+			label->setPosition(Point(visibleSizeWidth / 2, visibleSizeHeight*0.3));
+			this->addChild(label, 1001);
+
+			auto repeatLabel = CCSprite::create("buttons/restart_arr.png");
+			repeatLabel->setAnchorPoint(Point(0, 0));
 			auto repeatMenuItem = MenuItemSprite::create(repeatLabel, repeatLabel, repeatLabel);
 			repeatLabel->setScale(visibleSizeHeight / 5 / repeatLabel->getContentSize().height);
 			repeatMenuItem->setPosition(Point(visibleSizeWidth / 4, visibleSizeHeight*0.6));
 			repeatMenuItem->setCallback(CC_CALLBACK_1(GameScene::RestartGame, this));
-			auto menu = Menu::create(repeatMenuItem, nullptr);
+
+			auto exitLabel = CCSprite::create("buttons/exit_btn.png");
+			auto exitLabelActive = CCSprite::create("buttons/exit_btn_active.png");
+
+			/*exitLabel->setContentSize(Size(200, 200));
+			exitLabel->setContentSize(Size(200, 200));
+			*/
+			exitLabel->setAnchorPoint(Point(0, 0));
+			exitLabelActive->setAnchorPoint(Point(0, 0));
+			auto exitMenuItem = MenuItemSprite::create(exitLabel, exitLabelActive, exitLabel);
+			exitLabel->setScale(visibleSizeHeight / 5 / exitLabel->getContentSize().height);
+			exitLabelActive->setScale(visibleSizeHeight / 5 / exitLabel->getContentSize().height);
+			exitMenuItem->setPosition(Point(visibleSizeWidth / 4 * 3, visibleSizeHeight * 0.6));
+			exitMenuItem->setCallback(CC_CALLBACK_1(GameScene::EndGame, this));
+
+			Vector<MenuItem*> menuItems;
+
+			menuItems.pushBack(repeatMenuItem);
+			menuItems.pushBack(exitMenuItem);
+
+			auto menu = Menu::createWithArray(menuItems);
 			menu->setPosition(Point::ZERO);
 			this->addChild(menu, 1001);
 		}
 	}
 	kitty->Animate();
+}
+
+void GameScene::GoToMainMenu(cocos2d::Ref *sender) {
+	auto menuScene = MainMenuScene::createScene();
+	Director::getInstance()->setNotificationNode(nullptr);
+	Director::getInstance()->replaceScene(menuScene);
+}
+
+void GameScene::CleanupSceneSequence(cocos2d::Ref *sender) {
+	if(!gameOverInitiated){
+		Director::getInstance()->setNotificationNode(nullptr);
+	}
+	this->removeChildByName("PromptMenu", true);
+	this->removeChildByName("PromptTitle", true);
+}
+void GameScene::MainMenuPrompt(cocos2d::Ref *sender) {
+	if (!gameOverInitiated) {
+		auto scene = Popup::createScene();
+		Director::getInstance()->setNotificationNode(scene);
+		auto label = Label::createWithTTF("TO THE MAIN MENU?", "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
+		label->setPosition(Point(visibleSizeWidth / 2, visibleSizeHeight*0.8));
+		label->setName("PromptTitle");
+		this->addChild(label, 1001);
+
+		auto menuItemLabel = MenuItemFont::create();
+		auto exitMenuItemLabel = MenuItemFont::create();
+
+		exitMenuItemLabel->setLabel(Label::createWithTTF("YES", "fonts/Gamegirl.ttf", 32));
+		exitMenuItemLabel->setCallback(CC_CALLBACK_1(GameScene::GoToMainMenu, this));
+
+		auto menu = Menu::create();
+		menuItemLabel->setLabel(Label::createWithTTF("NO", "fonts/Gamegirl.ttf", 32));
+		menuItemLabel->setCallback(CC_CALLBACK_1(GameScene::CleanupSceneSequence, this));
+
+		exitMenuItemLabel->setPosition(Point(visibleSizeWidth / 2, visibleSizeHeight*0.6));
+		menuItemLabel->setPosition(Point(visibleSizeWidth / 2, visibleSizeHeight*0.4));
+		Vector<MenuItem*> menuItems;
+
+		menuItems.pushBack(menuItemLabel);
+		menuItems.pushBack(exitMenuItemLabel);
+
+		menu->setName("PromptMenu");
+		menu->initWithArray(menuItems);
+		menu->setPosition(Point::ZERO);
+		this->addChild(menu, 1001);
+	}
 }
 
 void GameScene::RestartGame(cocos2d::Ref *sender) {

@@ -33,18 +33,19 @@ bool MainMenuScene::init()
 	Size visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-	auto backgroundSprite = CCSprite::create("bg_part.png");
+	auto backgroundSprite = CCSprite::create("backgrouns/menu_bg1.png");
+
+	backgroundSprite->setAnchorPoint(Point(0, 0));
 
 	float bgPartScale = visibleSize.height / backgroundSprite->getContentSize().height;
-	int bgPartCounter = ceilf(visibleSize.width / (backgroundSprite->getContentSize().width*bgPartScale))+1;
-	for (int i = 0; i < bgPartCounter; i++){
-		auto backgroundSprite = CCSprite::create("bg_part.png");
-		backgroundSprite->setPosition(Point(backgroundSprite->getContentSize().width * bgPartScale * i, visibleSize.height / 2 + origin.y));
-		backgroundSprite->setScale(visibleSize.height / backgroundSprite->getContentSize().height);
-		this->addChild(backgroundSprite, 0);
-	}
+	
+	backgroundSprite->setScale(bgPartScale);
 
-	auto label = Label::createWithTTF("TAP TO START", "fonts/Gamegirl.ttf", 32);
+	backgroundSprite->setPosition(origin.x, origin.y);
+	
+	this->addChild(backgroundSprite, 0);
+
+	auto label = Label::createWithTTF("START", "fonts/Gamegirl.ttf", 32);
 	auto exitLabel = Label::createWithTTF("EXIT", "fonts/Gamegirl.ttf", 32);
 
 	auto menuItemLabel = MenuItemFont::create();
@@ -56,8 +57,8 @@ bool MainMenuScene::init()
 	menuItemLabel->setLabel(Label::createWithTTF("START", "fonts/Gamegirl.ttf", 32));
 	menuItemLabel->setCallback(CC_CALLBACK_1(MainMenuScene::GoToGameScene, this));
 	
-	menuItemLabel->setPosition(Point(visibleSize.width / 2, visibleSize.height*0.6));
-	exitMenuItemLabel->setPosition(Point(visibleSize.width / 2, visibleSize.height*0.4));
+	menuItemLabel->setPosition(Point(visibleSize.width - label->getContentSize().width / 2, visibleSize.height*0.6));
+	exitMenuItemLabel->setPosition(Point(visibleSize.width - exitLabel->getContentSize().width / 2, visibleSize.height*0.4));
 	Vector<MenuItem*> menuItems;
 
 	menuItems.pushBack(menuItemLabel);
@@ -73,7 +74,15 @@ void MainMenuScene::EndGame(cocos2d::Ref *sender){
 	Director::getInstance()->end();
 }
 void MainMenuScene::GoToGameScene(cocos2d::Ref *sender) {
+	Size visibleSize = Director::getInstance()->getVisibleSize();
+	Vec2 origin = Director::getInstance()->getVisibleOrigin();
+
 	auto scene = GameScene::createScene();
+	auto backgroundSprite = CCSprite::create("backgrouns/menu_bg2.png");
+	backgroundSprite->setAnchorPoint(Point(0, 0));
+	float bgPartScale = visibleSize.height / backgroundSprite->getContentSize().height;
+	backgroundSprite->setScale(bgPartScale);
+	backgroundSprite->setPosition(origin.x, origin.y);
 
 	Director::getInstance()->replaceScene(TransitionFade::create(TRANSITION_TIME, scene));
 }

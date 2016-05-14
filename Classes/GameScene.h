@@ -4,7 +4,6 @@
 #include "cocos2d.h"
 #include "Column.h"
 #include "Kitty.h"
-#include "SimpleAudioEngine.h"
 
 class GameScene : public cocos2d::Layer
 {
@@ -24,7 +23,6 @@ public:
 	cocos2d::EventListenerTouchOneByOne *touchListener;
 	cocos2d::EventListenerPhysicsContact *contactListener;
 
-
 private:
 	void SetPhysicsWorld(cocos2d::PhysicsWorld *world) {
 		sceneWorld = world;
@@ -38,9 +36,14 @@ private:
 	cocos2d::Label *scoreLabel;
 	void SpawnCol(float dt);
 	void KittyJump(float dt);
+	
+	void EndGame(cocos2d::Ref * sender); 
 	void ScheduleSpawnBg(float dt);
 	void SpawnBg(float dt);
 	void RestartGame(cocos2d::Ref *sender);
+	void MainMenuPrompt(cocos2d::Ref *sender);
+	void CleanupSceneSequence(cocos2d::Ref *sender);
+	void GoToMainMenu(cocos2d::Ref *sender);
 	bool onContactBegin(cocos2d::PhysicsContact &contact);
 	bool onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event);
 	bool onTouchMove(cocos2d::Touch *touch, cocos2d::Event *event);

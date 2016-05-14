@@ -62,9 +62,7 @@ bool Popup::init() {
 
 	rectNode->drawPolygon(rectangle, 4, color, 0, color);
 	rectNode->setCascadeColorEnabled(true);
-	auto label = Label::createWithTTF("GAME OVER", "fonts/Gamegirl.ttf", visibleSize.height * SCORE_FONT_SIZE);
-	label->setPosition(Point(visibleSize.width / 2, visibleSize.height*0.3));
-	this->addChild(label);
+
 	this->addChild(rectNode, 1000);	
 }
 
