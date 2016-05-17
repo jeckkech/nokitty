@@ -298,10 +298,7 @@ bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
 				Vec2 origin = Director::getInstance()->getVisibleOrigin();
 				CCLOG("COLUMNS NUMBER0: %i", columnList.size());
 				for (int i = 0; i < columnList.size(); i++) {
-					/*std::string colName = columnList.at(i)->getName().c_str();
-
-					CCLOG("COLUMN NAME %s", columnList.at(i)->getName().c_str());*/
-					if (columnList.at(i)->getBoundingBox().containsPoint(touch->getLocation())) {
+					if (columnList.at(i)->getBoundingBox().containsPoint(touch->getLocation()) && !strcmp(columnList.at(i)->getName().c_str(), "ColumnCollided")) {
 						CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_put.wav");
 						Director::getInstance()->getEventDispatcher()->removeEventListenersForTarget(node);
 						float colScale = visibleSizeHeight / 3 / columnList.at(i)->getContentSize().height;
@@ -329,11 +326,7 @@ bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
 						}
 						
 						node->setPositionX(columnList.at(i)->getPositionX() + origin.x );
-
-						//colY - ((colHeight - vase->getContentSize().height*vaseScale*1.2) / 2) + colHeight)
-
 						node->setPositionY(columnList.at(i)->getPositionY() - ((colHeight*colScale - node->getContentSize().height*vaseScale) / 2) + colHeight*colScale);
-						//body->getNode()->setPositionY(columnList.at(i)->getPositionY() - (colHeight));
 						body->getNode()->stopAllActions();
 						
 							totalScore = totalScore + 1;
@@ -356,6 +349,12 @@ void GameScene::EndGame(cocos2d::Ref *sender) {
 }
 
 void GameScene::update(float dt) {
+	for (int i = 0; i < columnList.size(); i++) {
+		if (columnList.at(i)->getBoundingBox().containsPoint(kitty->GetPosition())) {
+			columnList.at(i)->setName("ColumnCollided");
+		}
+	}
+
 	float bgSize = backgroundSprite1->getContentSize().width*backgroundSprite1->getScale();
 	if (backgroundSprite1->getPositionX() <= -bgSize) {
 		backgroundSprite1->setPositionX(backgroundSprite3->getPositionX() + bgSize);
@@ -381,7 +380,6 @@ void GameScene::update(float dt) {
 			CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_fall.wav");
 			CCLOG("GAME OVER!");
 			UserDefault::getInstance()->setBoolForKey("game_started", true);
-			//Director::getInstance()->getEventDispatcher()->removeAllEventListeners();
 			contactListener->setEnabled(false);
 			touchListener->setEnabled(false);
 		
@@ -389,7 +387,6 @@ void GameScene::update(float dt) {
 			UserDefault *def = UserDefault::getInstance();
 			int savedHighScore = def->getIntegerForKey("high_score", 0);
 			if (savedHighScore < totalScore) {
-				CCLOG("NEW HIGH SCORE!!!");
 				
 				auto newHighScoreLabel = Label::createWithTTF("NEW HIGH SCORE!", "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
 				newHighScoreLabel->setPosition(Point(visibleSizeWidth / 2, visibleSizeHeight - (newHighScoreLabel->getContentSize().height * 3)));

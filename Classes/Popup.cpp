@@ -52,14 +52,12 @@ bool Popup::init() {
 	this->addChild(rectNode, 1000);	
 }
 
-
 void Popup::GoToGameScene(cocos2d::Ref *sender) {
 	CCLOG("GAME RESTART REQUESTED");
 	auto scene = GameScene::createScene();
 	Director::getInstance()->setNotificationNode(nullptr);
 	Director::getInstance()->replaceScene(TransitionFade::create(TRANSITION_TIME, scene));
 }
-
 
 void Popup::menuCloseCallback(Ref* pSender)
 {
