@@ -13,6 +13,7 @@ public:
 
     // Here's a difference. Method 'init' in cocos2d-x returns bool, instead of returning 'id' in cocos2d-iphone
     virtual bool init();
+	virtual void onExit();
     
     // a selector callback
     void menuCloseCallback(cocos2d::Ref* pSender);
@@ -22,6 +23,7 @@ public:
 	void update(float) override;
 	cocos2d::EventListenerTouchOneByOne *touchListener;
 	cocos2d::EventListenerPhysicsContact *contactListener;
+	cocos2d::EventListenerTouchOneByOne *startListener;
 
 private:
 	void SetPhysicsWorld(cocos2d::PhysicsWorld *world) {
@@ -40,6 +42,9 @@ private:
 	void EndGame(cocos2d::Ref * sender); 
 	void ScheduleSpawnBg(float dt);
 	void SpawnBg(float dt);
+	void BeginGame();
+	void initializeManView();
+	bool onLabelTouch(cocos2d::Touch *touch, cocos2d::Event *event);
 	void RestartGame(cocos2d::Ref *sender);
 	void MainMenuPrompt(cocos2d::Ref *sender);
 	void CleanupSceneSequence(cocos2d::Ref *sender);
@@ -61,6 +66,7 @@ private:
 	Column column;
 	Kitty *kitty;
 	cocos2d::Sprite *backgroundSprite;
+
 };
 
 #endif // __GAME_SCENE_H__

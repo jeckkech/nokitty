@@ -46,20 +46,6 @@ bool Popup::init() {
 
 	cocos2d::Color4F color(222, 222, 222, 0.5);
 
-	CCLOG("ADMOB SHOULD START NOW");
-	/*if (AdmobHelper::isAdShowing) {
-		AdmobHelper::hideAd();
-		CCLOG("HIDE ADMOB");
-	}
-	else {
-		AdmobHelper::showAd();
-		CCLOG("SHOW ADMOB");
-	}*/
-
-	if (!AdmobHelper::isAdShowing) {
-		AdmobHelper::showAd();
-	}
-
 	rectNode->drawPolygon(rectangle, 4, color, 0, color);
 	rectNode->setCascadeColorEnabled(true);
 

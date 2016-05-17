@@ -35,6 +35,124 @@ Scene* GameScene::createScene()
     return scene;
 }
 
+bool GameScene::onLabelTouch(cocos2d::Touch *touch, cocos2d::Event *event) {
+	Director::getInstance()->setNotificationNode(nullptr);
+	this->removeChildByName("ManualSpriteNode");
+	this->removeChildByName("ManualSpriteNodeAnimation");
+	this->removeChildByName("TapToStartLabel");
+	startListener->release();
+	GameScene::BeginGame();
+	return true;
+}
+
+void GameScene::initializeManView() {
+	Size visibleSize = Director::getInstance()->getVisibleSize();
+	Vec2 origin = Director::getInstance()->getVisibleOrigin();
+
+	auto scene = Popup::createScene();
+	Director::getInstance()->setNotificationNode(scene);
+	
+	auto tapToStartLabel = Label::createWithTTF("TAP TO START", "fonts/Gamegirl.ttf", visibleSize.height * SCORE_FONT_SIZE);
+	tapToStartLabel->setPosition(visibleSize.width / 2 + origin.x, visibleSize.height * 0.8);
+	ActionInterval *blinkLabelAction = CCBlink::create(1, 1);
+	this->addChild(tapToStartLabel, 1001);
+	tapToStartLabel->runAction(RepeatForever::create(blinkLabelAction));
+	tapToStartLabel->setName("TapToStartLabel");
+	cocos2d::SpriteBatchNode* spritebatch = SpriteBatchNode::create("common/manual/man.png");
+	SpriteFrameCache* cache = SpriteFrameCache::getInstance();
+	cache->addSpriteFramesWithFile("common/manual/man.plist");
+
+	auto manSprite = Sprite::createWithSpriteFrame(cache->getSpriteFrameByName("man1.png"));
+
+	Vector<SpriteFrame*> animFrames(4);
+
+	for (int i = 1; i <= 4; i++) {
+		char str[100] = { 0 };
+		sprintf(str, "man%i.png", i);
+		auto spr = Sprite::create(str);
+		auto frame = cache->getSpriteFrameByName(str);
+		animFrames.pushBack(frame);
+	}
+
+	float manScale = visibleSize.height / CCSprite::create("common/manual/man1.png")->getContentSize().height;
+	manSprite->setName("ManualSpriteNode");
+	spritebatch->addChild(manSprite);
+	this->addChild(spritebatch, 1000);
+	
+	manSprite->setAnchorPoint(Point(0, 0));
+	manSprite->setPosition(visibleSize.width / 2 + origin.x - (manSprite->getContentSize().width * manScale / 2), origin.y);
+	spritebatch->setAnchorPoint(Point(0, 0));
+	manSprite->setScale(manScale);
+	auto animation = Animation::createWithSpriteFrames(animFrames, 1.0f);
+	manSprite->runAction(RepeatForever::create(Animate::create(animation)));
+	spritebatch->setName("ManualSpriteNodeAnimation");
+	startListener = EventListenerTouchOneByOne::create();
+	startListener->setSwallowTouches(true);
+	startListener->onTouchBegan = CC_CALLBACK_2(GameScene::onLabelTouch, this);
+	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(startListener, this);
+}
+
+void GameScene::BeginGame() {
+	Vec2 origin = Director::getInstance()->getVisibleOrigin();
+	auto backgroundAction1 = MoveBy::create(COL_MOVEMENT_SPEED*visibleSizeWidth, Point(-visibleSizeWidth*1.5, 0));
+	auto backgroundAction2 = MoveBy::create(COL_MOVEMENT_SPEED*visibleSizeWidth, Point(-visibleSizeWidth*1.5, 0));
+	auto backgroundAction3 = MoveBy::create(COL_MOVEMENT_SPEED*visibleSizeWidth, Point(-visibleSizeWidth*1.5, 0));
+
+	backgroundSprite1->runAction(RepeatForever::create(backgroundAction1));
+	backgroundSprite2->runAction(RepeatForever::create(backgroundAction2));
+	backgroundSprite3->runAction(RepeatForever::create(backgroundAction3));
+
+	auto menuLabel = CCSprite::create("buttons/menu_btn.png");
+	menuLabel->setAnchorPoint(Point(0, 0));
+	auto menuLabelItem = MenuItemSprite::create(menuLabel, menuLabel, menuLabel);
+	//CCLOG("BUTTON SCALE %f", (visibleSize.height * SCORE_FONT_SIZE * 1.3) / menuLabel->getContentSize().height);
+	menuLabel->setScale((visibleSizeHeight * SCORE_FONT_SIZE * 1.3) / menuLabel->getContentSize().height);
+	//menuLabel->setContentSize(Size(menuLabel->getContentSize().width, (visibleSize.height * SCORE_FONT_SIZE * 1.3)));
+	menuLabelItem->setPosition(Point(visibleSizeWidth - origin.x, visibleSizeHeight + origin.y));
+	menuLabelItem->setCallback(CC_CALLBACK_1(GameScene::MainMenuPrompt, this));
+	auto menu = Menu::create(menuLabelItem, nullptr);
+	menu->setPosition(Point::ZERO);
+	this->addChild(menu, 1001);
+
+	auto edgeBody = PhysicsBody::createEdgeBox(Size(visibleSizeWidth, visibleSizeHeight), PHYSICSBODY_MATERIAL_DEFAULT, 3);
+	auto edgeNode = Node::create();
+	edgeBody->setCollisionBitmask(FLOOR_COLLISION_BITMASK);
+	edgeBody->setContactTestBitmask(true);
+	edgeBody->setEnable(false);
+	edgeNode->setPosition(Point(visibleSizeWidth / 2 + origin.x, visibleSizeHeight / 2 + origin.y));
+	edgeNode->setPhysicsBody(edgeBody);
+	this->addChild(edgeNode);
+
+	this->schedule(schedule_selector(GameScene::SpawnCol), COL_SPAWN_FREQUENCY * visibleSizeWidth);
+	totalScore = 0;
+
+	__String *tempScore = __String::createWithFormat("%i", totalScore);
+	scoreLabel = Label::createWithTTF(tempScore->getCString(), "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
+	scoreLabel->setPosition(visibleSizeWidth / 2 + origin.x, visibleSizeHeight - scoreLabel->getHeight());
+	this->addChild(scoreLabel);
+
+
+	int savedHighScore = UserDefault::getInstance()->getIntegerForKey("high_score", 0);
+	__String *tempHighScore = String::createWithFormat("HI %i", savedHighScore);
+	auto highScoreLabel = Label::createWithTTF(tempHighScore->getCString(), "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
+	highScoreLabel->setPosition(Point(highScoreLabel->getContentSize().width, visibleSizeHeight - (highScoreLabel->getHeight())));
+	this->addChild(highScoreLabel);
+
+	kitty = new Kitty(this);
+	this->scheduleUpdate();
+
+	contactListener = EventListenerPhysicsContact::create();
+	contactListener->onContactBegin = CC_CALLBACK_1(GameScene::onContactBegin, this);
+	this->getEventDispatcher()->addEventListenerWithSceneGraphPriority(contactListener, this);
+
+	touchListener = EventListenerTouchOneByOne::create();
+
+	touchListener->setSwallowTouches(false);
+	touchListener->onTouchBegan = CC_CALLBACK_2(GameScene::onTouchBegan, this);
+	touchListener->onTouchMoved = CC_CALLBACK_2(GameScene::onTouchMove, this);
+	touchListener->onTouchEnded = CC_CALLBACK_2(GameScene::onTouchStop, this);
+	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, this);
+}
 // on "init" you need to initialize your instance
 bool GameScene::init()
 {
@@ -82,67 +200,12 @@ bool GameScene::init()
 	this -> addChild(backgroundSprite2, 0);
 	this -> addChild(backgroundSprite3, 0);
 
-	auto backgroundAction1 = MoveBy::create(COL_MOVEMENT_SPEED*visibleSize.width, Point(-visibleSize.width*1.5, 0));
-	auto backgroundAction2 = MoveBy::create(COL_MOVEMENT_SPEED*visibleSize.width, Point(-visibleSize.width*1.5, 0));
-	auto backgroundAction3 = MoveBy::create(COL_MOVEMENT_SPEED*visibleSize.width, Point(-visibleSize.width*1.5, 0));
-
-	backgroundSprite1->runAction(RepeatForever::create(backgroundAction1));
-	backgroundSprite2->runAction(RepeatForever::create(backgroundAction2));
-	backgroundSprite3->runAction(RepeatForever::create(backgroundAction3));
-
-	auto menuLabel = CCSprite::create("buttons/menu_btn.png");
-	menuLabel->setAnchorPoint(Point(0, 0));
-	auto menuLabelItem = MenuItemSprite::create(menuLabel, menuLabel, menuLabel);
-	CCLOG("BUTTON SCALE %f", (visibleSize.height * SCORE_FONT_SIZE * 1.3) / menuLabel->getContentSize().height);
-	menuLabel->setScale((visibleSize.height * SCORE_FONT_SIZE * 1.3) / menuLabel->getContentSize().height);
-	//menuLabel->setContentSize(Size(menuLabel->getContentSize().width, (visibleSize.height * SCORE_FONT_SIZE * 1.3)));
-			menuLabelItem->setPosition(Point(visibleSizeWidth - origin.x, visibleSizeHeight + origin.y));
-	menuLabelItem->setCallback(CC_CALLBACK_1(GameScene::MainMenuPrompt, this));
-	auto menu = Menu::create(menuLabelItem, nullptr);
-	menu->setPosition(Point::ZERO);
-	this->addChild(menu, 1001);
-	
-
-
-	auto edgeBody = PhysicsBody::createEdgeBox(visibleSize, PHYSICSBODY_MATERIAL_DEFAULT, 3);
-	auto edgeNode = Node::create();
-	edgeBody->setCollisionBitmask(FLOOR_COLLISION_BITMASK);
-	edgeBody->setContactTestBitmask(true);
-	edgeBody->setEnable(false);
-	edgeNode->setPosition(Point(visibleSize.width/2 + origin.x, visibleSize.height/2 + origin.y));
-	edgeNode->setPhysicsBody(edgeBody);
-	this->addChild(edgeNode);
-
-	this->schedule(schedule_selector(GameScene::SpawnCol), COL_SPAWN_FREQUENCY * visibleSize.width);
-	totalScore = 0;
-
-	__String *tempScore = __String::createWithFormat("%i", totalScore);
-	scoreLabel = Label::createWithTTF(tempScore->getCString(), "fonts/Gamegirl.ttf", visibleSize.height * SCORE_FONT_SIZE);
-	scoreLabel->setPosition(visibleSizeWidth / 2 + origin.x, visibleSizeHeight - scoreLabel->getHeight());
-	this->addChild(scoreLabel);
-
-
-	int savedHighScore = UserDefault::getInstance()->getIntegerForKey("high_score", 0);
-	__String *tempHighScore = String::createWithFormat("HI %i", savedHighScore);
-	auto highScoreLabel = Label::createWithTTF(tempHighScore->getCString(), "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
-	highScoreLabel->setPosition(Point(highScoreLabel->getContentSize().width, visibleSizeHeight - (highScoreLabel->getHeight())));
-	this->addChild(highScoreLabel);
-
-	kitty = new Kitty(this);
-	this->scheduleUpdate();
-
-	contactListener = EventListenerPhysicsContact::create();
-	contactListener->onContactBegin = CC_CALLBACK_1(GameScene::onContactBegin, this);
-	this->getEventDispatcher()->addEventListenerWithSceneGraphPriority(contactListener, this);
-	
-	touchListener = EventListenerTouchOneByOne::create();
-	
-	touchListener->setSwallowTouches(false);
-	touchListener->onTouchBegan = CC_CALLBACK_2(GameScene::onTouchBegan, this);
-	touchListener->onTouchMoved = CC_CALLBACK_2(GameScene::onTouchMove, this);
-	touchListener->onTouchEnded = CC_CALLBACK_2(GameScene::onTouchStop, this);
-	Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, this);
-
+	if (UserDefault::getInstance()->getBoolForKey("game_started")) {
+		GameScene::BeginGame();
+	}
+	else {
+		GameScene::initializeManView();
+	}
     return true;
 }
 bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
@@ -175,27 +238,12 @@ bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone()->clone(), a->getNode());
 		b->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), b->getNode());
 	} 
-	/*else if (KITTY_COLLISION_BITMASK == a->getCollisionBitmask() && COLUMN_COLLISION_BITMASK == b->getCollisionBitmask()) {
-		b->getNode()->setName("ColumnActive");
-	}
-	else if (KITTY_COLLISION_BITMASK == b->getCollisionBitmask() && COLUMN_COLLISION_BITMASK == a->getCollisionBitmask()) {
-		a->getNode()->setName("ColumnActive");
-	}*/
 	else if (VASE_COLLISION_BITMASK == a->getCollisionBitmask()) {
 		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), a->getNode());
 	}
 	else if (VASE_COLLISION_BITMASK == b->getCollisionBitmask()) {
 		b->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), b->getNode());
 	}
-/*	if (movingNode) { //TODO comment this block if performance drop
-		
-		//movingNode->getPhysicsBody()->setGravityEnable(true);
-		//movingNode->getPhysicsBody()->setDynamic(true);
-		movingNode->getPhysicsBody()->setEnable(true);
-		Director::getInstance()->getEventDispatcher()->removeEventListenersForTarget(movingNode);
-		Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), movingNode);
-		movingNode = nullptr;
-	}*/
 }
 
 bool GameScene::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event) {
@@ -332,6 +380,7 @@ void GameScene::update(float dt) {
 		if (vaseList.at(i)->getPositionY() <= 0 && !gameOverInitiated) {
 			CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_fall.wav");
 			CCLOG("GAME OVER!");
+			UserDefault::getInstance()->setBoolForKey("game_started", true);
 			//Director::getInstance()->getEventDispatcher()->removeAllEventListeners();
 			contactListener->setEnabled(false);
 			touchListener->setEnabled(false);
@@ -347,22 +396,14 @@ void GameScene::update(float dt) {
 				this->addChild(newHighScoreLabel);
 				def->setIntegerForKey("high_score", totalScore);
 			}
-			/*
-			auto label = Label::createWithTTF("GAME OVER2", "fonts/Gamegirl.ttf", 16);
-			label->setPosition(Point(visibleSizeWidth / 2, visibleSizeHeight / 2));
-			this->addChild(label);
-			*/
-			/*scoreLabel->setVisible(false);
-
-			__String *tempScore = __String::createWithFormat("%i", totalScore);
-			auto highScoreLabel = Label::createWithTTF(tempScore->getCString(), "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
-			highScoreLabel->setPosition(Point(visibleSizeWidth / 2, visibleSizeHeight - (highScoreLabel->getContentSize().height * 2)));
-			this->addChild(highScoreLabel, 1001);*/
 
 			gameOverInitiated = true;
 
-
 			Director::getInstance()->setNotificationNode(scene);
+
+			if (!AdmobHelper::isAdShowing) {
+				AdmobHelper::showAd();
+			}
 			auto label = Label::createWithTTF("GAME OVER", "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
 			label->setPosition(Point(visibleSizeWidth / 2, visibleSizeHeight*0.3));
 			this->addChild(label, 1001);
@@ -467,6 +508,12 @@ void GameScene::SpawnCol(float dt) {
 void GameScene::KittyJump(float dt) {
 	kitty->Jump();
 	kitty->isInJump = true;
+}
+
+void GameScene::onExit()
+{
+	UserDefault::getInstance()->setBoolForKey("game_started", false);
+	CCLayer::onExit();
 }
 
 void GameScene::menuCloseCallback(Ref* pSender)
