@@ -106,9 +106,13 @@ void GameScene::BeginGame() {
 	menuLabel->setAnchorPoint(Point(0, 0));
 	auto menuLabelItem = MenuItemSprite::create(menuLabel, menuLabel, menuLabel);
 	//CCLOG("BUTTON SCALE %f", (visibleSize.height * SCORE_FONT_SIZE * 1.3) / menuLabel->getContentSize().height);
-	menuLabel->setScale((visibleSizeHeight * SCORE_FONT_SIZE * 1.3) / menuLabel->getContentSize().height);
+	float menuLabelScale = (visibleSizeHeight * SCORE_FONT_SIZE * 1.3) / menuLabel->getContentSize().height;
+	menuLabel->setScale(menuLabelScale);
 	//menuLabel->setContentSize(Size(menuLabel->getContentSize().width, (visibleSize.height * SCORE_FONT_SIZE * 1.3)));
-	menuLabelItem->setPosition(Point(visibleSizeWidth - origin.x, visibleSizeHeight + origin.y));
+//	(visibleSizeHeight - highScoreLabel->getContentSize().height) + origin.y)
+	menuLabelItem->setPosition(visibleSizeWidth - (menuLabel->getContentSize().width * menuLabelScale / 2) + origin.x,
+		visibleSizeHeight - (menuLabel->getContentSize().height * menuLabelScale / 2) + origin.y);
+
 	menuLabelItem->setCallback(CC_CALLBACK_1(GameScene::MainMenuPrompt, this));
 	auto menu = Menu::create(menuLabelItem, nullptr);
 	menu->setPosition(Point::ZERO);
@@ -128,14 +132,13 @@ void GameScene::BeginGame() {
 
 	__String *tempScore = __String::createWithFormat("%i", totalScore);
 	scoreLabel = Label::createWithTTF(tempScore->getCString(), "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
-	scoreLabel->setPosition(visibleSizeWidth / 2 + origin.x, visibleSizeHeight - scoreLabel->getHeight());
+	scoreLabel->setPosition(visibleSizeWidth / 2 + origin.x, ((visibleSizeHeight - scoreLabel->getContentSize().height) + origin.y));
 	this->addChild(scoreLabel);
-
 
 	int savedHighScore = UserDefault::getInstance()->getIntegerForKey("high_score", 0);
 	__String *tempHighScore = String::createWithFormat("HI %i", savedHighScore);
 	auto highScoreLabel = Label::createWithTTF(tempHighScore->getCString(), "fonts/Gamegirl.ttf", visibleSizeHeight * SCORE_FONT_SIZE);
-	highScoreLabel->setPosition(Point(highScoreLabel->getContentSize().width, visibleSizeHeight - (highScoreLabel->getHeight())));
+	highScoreLabel->setPosition(Point(highScoreLabel->getContentSize().width + origin.x, (visibleSizeHeight - highScoreLabel->getContentSize().height) + origin.y));
 	this->addChild(highScoreLabel);
 
 	kitty = new Kitty(this);
@@ -162,6 +165,7 @@ bool GameScene::init()
     {
         return false;
     }
+	impulsePower = 200;
 
 	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sounds/kitty_jump.wav");
 	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("sounds/vase_put.wav");
@@ -208,6 +212,15 @@ bool GameScene::init()
 	}
     return true;
 }
+std::default_random_engine rng;
+
+int randomNumber(int a, int b)
+{
+	rng.seed(std::random_device()());
+	std::uniform_int_distribution<int> dist_a_b(a, b);
+	return dist_a_b(rng);
+}
+
 bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 	PhysicsBody *a = contact.getShapeA()->getBody();
 	PhysicsBody *b = contact.getShapeB()->getBody();
@@ -216,7 +229,7 @@ bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 		a->setGravityEnable(true);
 		a->setDynamic(true);
 		a->getNode()->stopAllActions();
-		a->applyImpulse(Vect(rand() % 200 + (-100), rand() % 300 + (-150)));
+		a->applyImpulse(Vect(randomNumber(-(impulsePower), impulsePower), randomNumber(-150, 150)));
 		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_hit.wav");
 		CCLOG("IMPULSE APPLIED");		
 		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), a->getNode());
@@ -225,7 +238,7 @@ bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 		b->setGravityEnable(true);
 		b->setDynamic(true);
 		b->getNode()->stopAllActions();
-		b->applyImpulse(Vect(rand() % 200 + (-100), rand() % 300 + (-150)));
+		b->applyImpulse(Vect(randomNumber(-(impulsePower), impulsePower), randomNumber(-150, 150)));
 		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_hit.wav");
 		CCLOG("IMPULSE APPLIED2");
 		b->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), b->getNode());
@@ -235,7 +248,7 @@ bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 		b->setGravityEnable(true);
 		a->getNode()->stopAllActions();
 		b->getNode()->stopAllActions();
-		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone()->clone(), a->getNode());
+		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), a->getNode());
 		b->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), b->getNode());
 	} 
 	else if (VASE_COLLISION_BITMASK == a->getCollisionBitmask()) {
@@ -333,6 +346,17 @@ bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
 							__String *tempScore = __String::createWithFormat("%i", totalScore);
 							scoreLabel->setString(tempScore->getCString());
 
+							
+							if (totalScore % 10 == 0) {
+								this->unschedule(schedule_selector(GameScene::SpawnCol));
+								this->schedule(schedule_selector(GameScene::SpawnCol), (COL_SPAWN_FREQUENCY - (totalScore / 10 * 0.0005)) * visibleSizeWidth);
+								
+								/*impulsePower = 200 * floor(totalScore / 5);
+							//	COLUMN_SPEED_MULTIPLIER += 0.1;
+								/*float speed = COL_SPAWN_FREQUENCY;
+								#undef COL_SPAWN_FREQUENCY
+								#define COL_SPAWN_FREQUENCY COL_SPAWN_FREQUENCY_CONST - totalScore / 10 * 0.0005*/
+							}
 						auto columnAction = MoveBy::create(COL_MOVEMENT_SPEED * visibleSizeWidth, Point(-visibleSizeWidth*1.5, 0));
 						node->runAction(Sequence::create(columnAction, [=]() {node->stopAllActions(); node->removeFromParentAndCleanup(true); }, nullptr));
 						break;
@@ -366,9 +390,11 @@ void GameScene::update(float dt) {
 		backgroundSprite3->setPositionX(backgroundSprite2->getPositionX() + bgSize);
 	}
 	if(!gameOverInitiated){
+	
+	float colScale = visibleSizeHeight / 3 / 87;
 	for (int i = 0; i < columnList.size(); i++) {
 		float diff = columnList.at(i)->getPositionX() - this->kitty->GetPosition().x;
-		if (diff > 0 && diff <= columnList.at(i)->getContentSize().width * 2) {
+		if (diff > 0 && diff <= columnList.at(i)->getContentSize().width * colScale * 2) {
 			this->KittyJump(dt);
 			break;
 		}
@@ -378,7 +404,6 @@ void GameScene::update(float dt) {
 	for (int i = 0; i < vaseList.size(); i++) {
 		if (vaseList.at(i)->getPositionY() <= 0 && !gameOverInitiated) {
 			CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_fall.wav");
-			CCLOG("GAME OVER!");
 			UserDefault::getInstance()->setBoolForKey("game_started", true);
 			contactListener->setEnabled(false);
 			touchListener->setEnabled(false);

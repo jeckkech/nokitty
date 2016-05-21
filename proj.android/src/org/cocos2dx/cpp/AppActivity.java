@@ -123,6 +123,8 @@ public class AppActivity extends Cocos2dxActivity {
         AdRequest adRequest = new AdRequest.Builder()
                 .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
                 .addTestDevice("5FF56AEF6D51128B97409C80D2EF811F")
+                .addTestDevice("1A120123D7D8AD6EC6A15AB9DCACF05C")
+                .addTestDevice("94BB4BECE4ED30F299A4C8861E1B3F6C")
                 .build();
 
         interstitialAd.loadAd(adRequest);

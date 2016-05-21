@@ -28,7 +28,7 @@ void Column::SpawnColumn(cocos2d::Layer *layer, std::deque<cocos2d::Sprite*> *co
 	auto columnAction = MoveBy::create(COL_MOVEMENT_SPEED * visibleSize.width, Point(-visibleSize.width*1.5, 0));
 	column->runAction(Sequence::create(columnAction, [=]() {column->removeFromParentAndCleanup(true); }, nullptr));
 	
-	if (columnList->size() > 10) {
+	if (columnList->size() > 5) {
 		columnList->pop_front();
 	}
 	column->setName("Column");

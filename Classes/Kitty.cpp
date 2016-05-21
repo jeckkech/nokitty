@@ -26,7 +26,7 @@ Kitty::Kitty(cocos2d::Layer *layer) {
 		animFrames.pushBack(frame);
 	}
 
-	float kittyScale = visibleSize.height / 6 / CCSprite::create("kitty_1.png")->getContentSize().height;
+	kittyScale = visibleSize.height / 6 / CCSprite::create("kitty_1.png")->getContentSize().height;
 	catSprite->setName("KittySpriteNode");
 	spritebatch->addChild(catSprite);
 	layer->addChild(spritebatch, 2);
@@ -48,6 +48,14 @@ Kitty::Kitty(cocos2d::Layer *layer) {
 	
 	isInJump = false;
 	isLanding = false;
+}
+
+float Kitty::getKittyWidth() {
+	return catSprite->getContentSize().width * kittyScale;
+}
+
+float Kitty::getKittyHeight() {
+	return catSprite->getContentSize().height * kittyScale;
 }
 
 cocos2d::Vec2 Kitty::GetPosition() {

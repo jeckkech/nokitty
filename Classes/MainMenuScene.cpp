@@ -57,8 +57,8 @@ bool MainMenuScene::init()
 	menuItemLabel->setLabel(Label::createWithTTF("START", "fonts/Gamegirl.ttf", 32));
 	menuItemLabel->setCallback(CC_CALLBACK_1(MainMenuScene::GoToGameScene, this));
 	
-	menuItemLabel->setPosition(Point(visibleSize.width - label->getContentSize().width / 2, visibleSize.height*0.6));
-	exitMenuItemLabel->setPosition(Point(visibleSize.width - exitLabel->getContentSize().width / 2, visibleSize.height*0.4));
+	menuItemLabel->setPosition(Point(visibleSize.width - label->getContentSize().width / 2 - 30, visibleSize.height*0.6));
+	exitMenuItemLabel->setPosition(Point(visibleSize.width - exitLabel->getContentSize().width / 2 - 30, visibleSize.height*0.4));
 	Vector<MenuItem*> menuItems;
 
 	menuItems.pushBack(menuItemLabel);

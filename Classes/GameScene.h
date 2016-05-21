@@ -38,6 +38,8 @@ private:
 	cocos2d::Label *scoreLabel;
 	void SpawnCol(float dt);
 	void KittyJump(float dt);
+	int impulsePower;
+	float spawnFrequency = 0.004;
 	
 	void EndGame(cocos2d::Ref * sender); 
 	void ScheduleSpawnBg(float dt);

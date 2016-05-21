@@ -7,8 +7,16 @@ Vase::Vase() {
 	visibleSize = Director::getInstance()->getVisibleSize();
 	origin = Director::getInstance()->getVisibleOrigin();
 }
+
+int rand(int a, int b)
+{
+	std::default_random_engine rng;
+	rng.seed(std::random_device()());
+	std::uniform_int_distribution<int> dist_a_b(a, b);
+	return dist_a_b(rng);
+}
 void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, float colY, float colScale, std::deque<cocos2d::Sprite*> *vaseList, bool gameOverInitiated) {
-	int vaseId = rand()%3+1;
+	int vaseId = rand(1, 3);
 
 	char buff[20];
 	snprintf(buff, sizeof(buff), "vase_%i.png", vaseId);
@@ -24,6 +32,8 @@ void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, flo
 	snprintf(buff, sizeof(buff), "VaseElement_%i", vaseId);
 	std::string vaseStringId = buff;
 	vase->setName(vaseStringId);
+	//vase->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), vase);
+	//vase->getEventDispatcher()->pauseEventListenersForTarget(vase);
 	vase->setPhysicsBody(vaseBody);
 	vase->setVertexRect(Rect(0, 0, vase->getContentSize().width * 3, vase->getContentSize().height * 3));
 
