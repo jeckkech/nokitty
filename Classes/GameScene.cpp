@@ -346,10 +346,10 @@ bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
 							__String *tempScore = __String::createWithFormat("%i", totalScore);
 							scoreLabel->setString(tempScore->getCString());
 
-							
-							if (totalScore % 10 == 0) {
+							float speedInc = (totalScore / 10 * 0.0005);
+							if (totalScore % 10 == 0 && speedInc < COL_SPAWN_FREQUENCY) {
 								this->unschedule(schedule_selector(GameScene::SpawnCol));
-								this->schedule(schedule_selector(GameScene::SpawnCol), (COL_SPAWN_FREQUENCY - (totalScore / 10 * 0.0005)) * visibleSizeWidth);
+								this->schedule(schedule_selector(GameScene::SpawnCol), (COL_SPAWN_FREQUENCY - speedInc) * visibleSizeWidth);
 								
 								/*impulsePower = 200 * floor(totalScore / 5);
 							//	COLUMN_SPEED_MULTIPLIER += 0.1;

@@ -1,6 +1,8 @@
 #include "SplashScene.h"
 #include "MainMenuScene.h"
 #include "Definitions.h"
+#include "ui/UIVideoPlayer.h"
+#include "ui/CocosGUI.h"
 
 USING_NS_CC;
 
@@ -32,19 +34,38 @@ bool SplashScene::init()
 	Size visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-	this->scheduleOnce(schedule_selector(SplashScene::GoToMainMenuScene), DISPLAY_TIME_SPLASH_SCENE);
-	auto bgSprite = Sprite::create("splash.jpeg");
+	//this->scheduleOnce(schedule_selector(SplashScene::GoToMainMenuScene), DISPLAY_TIME_SPLASH_SCENE);
+	
+	experimental::ui::VideoPlayer *videoPlayer = experimental::ui::VideoPlayer::create();
+	videoPlayer->setFileName("video/intro_splash.mp4");
+	videoPlayer->setContentSize(Size(visibleSize.width / 2, visibleSize.height / 2));
+	videoPlayer->setPosition(Vec2(visibleSize.width / 2 + origin.x, visibleSize.height / 2 + origin.y));
+	videoPlayer->play();
+	videoPlayer->setFullScreenEnabled(true);
+	videoPlayer->setTouchEnabled(false);
+	videoPlayer->addEventListener(CC_CALLBACK_2(SplashScene::videoEventCallback, this));
+	this -> addChild(videoPlayer);
+
+
+	/*auto bgSprite = Sprite::create("splash.jpeg");
 	bgSprite->setPosition(Point(visibleSize.width/2 + origin.x, visibleSize.height/2 + origin.y));
 	this->addChild(bgSprite);
 
 	auto label = Label::createWithTTF("Say no to kitty", "fonts/Gamegirl.ttf", 32);
 	label->setPosition(Point(visibleSize.width / 2, visibleSize.height*0.6));
-	this->addChild(label);
+	this->addChild(label);*/
 
 
     return true;
 }
 
+void SplashScene::videoEventCallback(cocos2d::Ref *sender, cocos2d::experimental::ui::VideoPlayer::EventType eventType){
+	if(eventType == cocos2d::experimental::ui::VideoPlayer::EventType::COMPLETED || eventType == cocos2d::experimental::ui::VideoPlayer::EventType::PAUSED){
+		this->removeAllChildrenWithCleanup(true);
+		auto scene = MainMenuScene::createScene();
+		Director::getInstance()->replaceScene(TransitionFade::create(TRANSITION_TIME, scene));
+	} 
+}
 void SplashScene::GoToMainMenuScene(float dt) {
 	auto scene = MainMenuScene::createScene();
 	Director::getInstance()->replaceScene(TransitionFade::create(TRANSITION_TIME, scene));
