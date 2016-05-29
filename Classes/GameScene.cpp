@@ -40,7 +40,7 @@ bool GameScene::onLabelTouch(cocos2d::Touch *touch, cocos2d::Event *event) {
 	this->removeChildByName("ManualSpriteNode");
 	this->removeChildByName("ManualSpriteNodeAnimation");
 	this->removeChildByName("TapToStartLabel");
-	startListener->release();
+	startListener->setEnabled(false);
 	GameScene::BeginGame();
 	return true;
 }
@@ -122,7 +122,7 @@ void GameScene::BeginGame() {
 	auto edgeNode = Node::create();
 	edgeBody->setCollisionBitmask(FLOOR_COLLISION_BITMASK);
 	edgeBody->setContactTestBitmask(true);
-	edgeBody->setEnable(false);
+	edgeBody->setEnabled(false);
 	edgeNode->setPosition(Point(visibleSizeWidth / 2 + origin.x, visibleSizeHeight / 2 + origin.y));
 	edgeNode->setPhysicsBody(edgeBody);
 	this->addChild(edgeNode);
@@ -212,36 +212,26 @@ bool GameScene::init()
 	}
     return true;
 }
-std::default_random_engine rng;
-
-int randomNumber(int a, int b)
-{
-	rng.seed(std::random_device()());
-	std::uniform_int_distribution<int> dist_a_b(a, b);
-	return dist_a_b(rng);
-}
 
 bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 	PhysicsBody *a = contact.getShapeA()->getBody();
 	PhysicsBody *b = contact.getShapeB()->getBody();
 
 	if (VASE_COLLISION_BITMASK == a->getCollisionBitmask() && KITTY_COLLISION_BITMASK == b->getCollisionBitmask()) {
+		a->getNode()->stopAllActions();
 		a->setGravityEnable(true);
 		a->setDynamic(true);
-		a->getNode()->stopAllActions();
-		a->applyImpulse(Vect(randomNumber(-(impulsePower), impulsePower), randomNumber(-150, 150)));
-		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_hit.wav");
-		CCLOG("IMPULSE APPLIED");		
 		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), a->getNode());
+		a->applyImpulse(Vec2(cocos2d::random(-(impulsePower), impulsePower), cocos2d::random(-150, 150)), Vec2::ZERO);
+		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_hit.wav");
 	}
 	else if (VASE_COLLISION_BITMASK == b->getCollisionBitmask() && KITTY_COLLISION_BITMASK == a->getCollisionBitmask()) {
+		b->getNode()->stopAllActions();
 		b->setGravityEnable(true);
 		b->setDynamic(true);
-		b->getNode()->stopAllActions();
-		b->applyImpulse(Vect(randomNumber(-(impulsePower), impulsePower), randomNumber(-150, 150)));
-		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_hit.wav");
-		CCLOG("IMPULSE APPLIED2");
 		b->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), b->getNode());
+		b->applyImpulse(Vec2(cocos2d::random(-(impulsePower), impulsePower), cocos2d::random(-150, 150)), Vec2::ZERO);
+		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_hit.wav");
 	}
 	else if (VASE_COLLISION_BITMASK == a->getCollisionBitmask() && VASE_COLLISION_BITMASK == b->getCollisionBitmask()) {
 		a->setGravityEnable(true);
@@ -250,26 +240,31 @@ bool GameScene::onContactBegin(cocos2d::PhysicsContact &contact) {
 		b->getNode()->stopAllActions();
 		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), a->getNode());
 		b->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), b->getNode());
+		a->applyImpulse(Vec2(cocos2d::random(-(impulsePower), impulsePower), cocos2d::random(-150, 150)), Vec2::ZERO);
+		b->applyImpulse(Vec2(cocos2d::random(-(impulsePower), impulsePower), cocos2d::random(-150, 150)), Vec2::ZERO);
+		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_hit.wav");
 	} 
 	else if (VASE_COLLISION_BITMASK == a->getCollisionBitmask()) {
 		a->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), a->getNode());
+		//a->applyImpulse(Vec2(cocos2d::random(-(impulsePower), impulsePower), cocos2d::random(-150, 150)), Vec2::ZERO);
+		//CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_hit.wav");
 	}
 	else if (VASE_COLLISION_BITMASK == b->getCollisionBitmask()) {
 		b->getNode()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), b->getNode());
+		//b->applyImpulse(Vec2(cocos2d::random(-(impulsePower), impulsePower), cocos2d::random(-150, 150)), Vec2::ZERO);
+		//CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_hit.wav");
 	}
 }
 
 bool GameScene::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event) {
 	auto node = event->getCurrentTarget();
-	CCLOG("VASE TAP");
-	CCLOG("%s", node->getName().c_str());
 
 	if (node && !gameOverInitiated) {
 		std::string nodeName = node->getName().c_str();
 		if (node->getBoundingBox().containsPoint(touch->getLocation()) && nodeName.find("VaseElement") != std::string::npos) {
 			movingNode = node;
-			node->getPhysicsBody()->resetForces();
 			node->stopAllActions();
+			node->getPhysicsBody()->resetForces();
 			node->setPosition(touch->getLocation() + touch->getDelta());
 		}
 	}
@@ -278,17 +273,14 @@ bool GameScene::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event) {
 bool GameScene::onTouchMove(cocos2d::Touch *touch, cocos2d::Event *event) {
 	auto node = event->getCurrentTarget();
 	auto body = node->getPhysicsBody();
-
+	
 	if (body && !gameOverInitiated) {
 		std::string nodeName = node->getName().c_str();
-		if (node->getBoundingBox().containsPoint(touch->getLocation()) && nodeName.find("VaseElement") != std::string::npos && movingNode == node) {
+		if (node->getBoundingBox().containsPoint(touch->getLocation()) && 
+			nodeName.find("VaseElement") != std::string::npos && movingNode == node) {
 			node->setPosition(touch->getLocation() + touch->getDelta());
 		}
 	}
-}
-
-bool GameScene::onTouchCancel(cocos2d::Touch *touch, cocos2d::Event *event) {
-	CCLOG("TOUCH WAS CANCELLED!!!!");
 }
 
 bool hasEnding(std::string const &fullString, std::string const &ending) {
@@ -307,9 +299,8 @@ bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
 		if (node && !gameOverInitiated) {
 			std::string nodeName = node->getName().c_str();
 			if (node->getBoundingBox().containsPoint(touch->getLocation()) && nodeName.find("VaseElement") != std::string::npos) {
-				movingNode = nullptr;
+				//movingNode = nullptr;
 				Vec2 origin = Director::getInstance()->getVisibleOrigin();
-				CCLOG("COLUMNS NUMBER0: %i", columnList.size());
 				for (int i = 0; i < columnList.size(); i++) {
 					if (columnList.at(i)->getBoundingBox().containsPoint(touch->getLocation()) && !strcmp(columnList.at(i)->getName().c_str(), "ColumnCollided")) {
 						CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/vase_put.wav");
@@ -320,21 +311,15 @@ bool GameScene::onTouchStop(cocos2d::Touch *touch, cocos2d::Event *event) {
 						body->setGravityEnable(false);
 						body->resetForces();
 						body->setDynamic(false);
-						body->getNode()->removeFromPhysicsWorld();
+						body->setEnabled(false);
 						body->getNode()->setRotation(0);
 
 						float colHeight = columnList.at(i)->getContentSize().height;
-
-						std::string segment;
-						
-						CCLOG("NODE NAME!!11");
-						CCLOG("%s", node->getName().c_str());
+					
 						if (hasEnding(node->getName().c_str(), "1")) {
-							CCLOG("HAS NAME 1");
 							vaseScale = vaseScale*1.5;
 						}
 						else if (hasEnding(node->getName().c_str(), "2")) {
-							CCLOG("HAS NAME 2");
 							vaseScale = vaseScale*1.2;
 						}
 						
@@ -391,9 +376,10 @@ void GameScene::update(float dt) {
 	}
 	if(!gameOverInitiated){
 	
+	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 	float colScale = visibleSizeHeight / 3 / 87;
 	for (int i = 0; i < columnList.size(); i++) {
-		float diff = columnList.at(i)->getPositionX() - this->kitty->GetPosition().x;
+		float diff = columnList.at(i)->getPositionX() + origin.x  - this->kitty->GetPosition().x;
 		if (diff > 0 && diff <= columnList.at(i)->getContentSize().width * colScale * 2) {
 			this->KittyJump(dt);
 			break;

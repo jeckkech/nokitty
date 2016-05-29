@@ -8,22 +8,15 @@ Vase::Vase() {
 	origin = Director::getInstance()->getVisibleOrigin();
 }
 
-int rand(int a, int b)
-{
-	std::default_random_engine rng;
-	rng.seed(std::random_device()());
-	std::uniform_int_distribution<int> dist_a_b(a, b);
-	return dist_a_b(rng);
-}
 void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, float colY, float colScale, std::deque<cocos2d::Sprite*> *vaseList, bool gameOverInitiated) {
-	int vaseId = rand(1, 3);
+	int vaseId = cocos2d::random(1, 3);
 
 	char buff[20];
 	snprintf(buff, sizeof(buff), "vase_%i.png", vaseId);
 	std::string buffAsStdStr = buff;
 
 	auto vase = Sprite::create(buffAsStdStr);
-	auto vaseBody = PhysicsBody::createBox(vase->getContentSize(), *new PhysicsMaterial(0, 1, 0));
+	auto vaseBody = PhysicsBody::createBox(vase->getContentSize(), PhysicsMaterial(0.0f, 1.0f, 0.0f));
 	vaseBody->setDynamic(!gameOverInitiated);
 	vaseBody->setGravityEnable(false);
 	vaseBody->setCollisionBitmask(VASE_COLLISION_BITMASK);
@@ -34,24 +27,27 @@ void Vase::SpawnVase(cocos2d::Layer *layer, float colHeight, float colWidth, flo
 	vase->setName(vaseStringId);
 	//vase->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener->clone(), vase);
 	//vase->getEventDispatcher()->pauseEventListenersForTarget(vase);
-	vase->setPhysicsBody(vaseBody);
+	if(vaseId != 1){
+		vase->setPhysicsBody(vaseBody);
+	}
 	vase->setVertexRect(Rect(0, 0, vase->getContentSize().width * 3, vase->getContentSize().height * 3));
 
 	float vaseScale = visibleSize.height / 3 / vase->getContentSize().height / 2;
 	
 	if(vaseId == 1){
 		float vaseWidth = vase->getContentSize().width * 3;
-		Rect vaseRect = *new Rect(-vaseWidth/2+vaseWidth/6, 0, vase->getContentSize().width * 3, vase->getContentSize().height);
+		//Rect vaseRect = Rect(-vaseWidth/2+vaseWidth/6, 0, vase->getContentSize().width * 3, vase->getContentSize().height);
 		//vase->setContentSize(*new Size(vase->getContentSize().width * 3, vase->getContentSize().height));
-		vaseBody = PhysicsBody::createBox(*new Size(vase->getContentSize().width*3, vase->getContentSize().height), *new PhysicsMaterial(0, 1, 0));
-		vase->setPhysicsBody(vaseBody);
-		vase->setScale(vaseScale * 1.5);
-		vase->setPosition(Point(visibleSize.width + colWidth + origin.x, colY - ((colHeight - vase->getContentSize().height*vaseScale*1.5) / 2) + colHeight));
+		auto newVaseBody = PhysicsBody::createBox(cocos2d::Size(vase->getContentSize().width*2, vase->getContentSize().height), PhysicsMaterial(0.0f, 1.0f, 0.0f), Vec2::ZERO);
 		
-		vaseBody->setDynamic(!gameOverInitiated);
-		vaseBody->setGravityEnable(false);
-		vaseBody->setCollisionBitmask(VASE_COLLISION_BITMASK);
-		vaseBody->setContactTestBitmask(true);
+		vase->setPhysicsBody(newVaseBody);
+		
+		vase->setPosition(Point(visibleSize.width + colWidth + origin.x, colY - ((colHeight - vase->getContentSize().height*vaseScale*1.5) / 2) + colHeight));
+		vase->setScale(vaseScale * 1.5);
+		newVaseBody->setDynamic(!gameOverInitiated);
+		newVaseBody->setGravityEnable(false);
+		newVaseBody->setCollisionBitmask(VASE_COLLISION_BITMASK);
+		newVaseBody->setContactTestBitmask(true);
 		//vase->setTextureRect(vaseRect);
 	}
 	else if (vaseId == 2) {
